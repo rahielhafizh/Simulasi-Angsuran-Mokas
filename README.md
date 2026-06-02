@@ -1,129 +1,372 @@
-# Sistem Simulasi Angsuran Motor Bekas (Mokas)
+# Sistem Simulasi Angsuran Motor Bekas (Mokas) SFI
+
+Sistem Simulasi Angsuran Motor Bekas (Mokas) merupakan platform kalkulasi pembiayaan kendaraan bekas yang dikembangkan untuk mendukung proses simulasi kredit angsuran kendaraan untuk dealer mitra SFI. Sistem dibangun menggunakan PHP native tanpa ORM dengan pendekatan service-oriented architecture untuk mempertahankan efisiensi akses database, kontrol penuh query execution, serta stabilitas perhitungan finansial. Sistem ini mengintegrasikan validasi pembiayaan, kalkulasi multi-stage pokok hutang, penentuan bunga, hingga pencatatan historis perhitungan simulasi oleh dealer ke pusat.
 
 ---
 
-## 1. Arsitektur Sistem & Data Access Layer
+# 1. System Architecture
 
-Sistem menggunakan pola _Singleton_ pada koneksi basis data (`Database` ) yang dienkapsulasi dengan mekanisme _retry_, _connection pooling_, dan _error logging_ dinamis untuk memastikan stabilitas koneksi ke Data Warehouse SFI (`SFI_DWH`).
+Seluruh komunikasi database dilakukan melalui Data Access Layer terpusat menggunakan pola Singleton. Arsitektur aplikasi mengadopsi pendekatan Service-Oriented dengan pemisahan tanggung jawab pada lapisan :
 
-- **Server Host:** `172.16.0.239`
-- **Database:** `SFI_DWH`
-- **Driver:** SQLSRV (isolasi transaksi `SQLSRV_TXN_READ_COMMITTED`)
-- **Caching Strategy:** Sistem mengimplementasikan in-memory array cache (`DatabaseService`) dengan parameter Time-To-Live (TTL) (default 300 detik, 600 detik untuk data MRP).
+| Layer              | Responsibility                                                         |
+| ------------------ | ---------------------------------------------------------------------- |
+| Presentation Layer | Rendering antarmuka dan komunikasi asynchronous melalui XMLHttpRequest |
+| Session Layer      | Penyimpanan dan sinkronisasi state simulasi                            |
+| Service Layer      | Implementasi business rules dan financial calculation                  |
+| Data Access Layer  | Eksekusi Stored Procedure dan parameterized SQL                        |
+| Persistence Layer  | Audit trail dan historical transaction recording                       |
 
-## 2. Implementasi Stored Procedure & Skema Relasional
+## Database Connection Strategy
 
-Sistem tidak menggunakan ORM, melainkan berinteraksi secara langsung melalui eksekusi _Stored Procedure_ dan _Parameterized T-SQL Queries_ untuk memitigasi risiko SQL Injection dan mengoptimalkan _query execution plan_.
+Untuk memastikan hanya satu koneksi aktif yang digunakan sepanjang lifecycle request, koneksi SQL Server dikelola melalui:
 
-### A. Authentication & Session Handling
+`Database::getInstance()`
 
-Proses autentikasi _dealer_ dan _user_ dialihkan sepenuhnya ke dalam layer database menggunakan Stored Procedure.
+### Database Configuration
 
-- **SP Name:** `SP_LOGIN_CHECK_DEALER`
-- **Parameter Input:** \* `@Username` (String)
-- `@Password` (MD5 Hash)
+| Property        | Value                     |
+| --------------- | ------------------------- |
+| Database        | SFI_DWH                   |
+| DBMS            | Microsoft SQL Server      |
+| Driver          | sqlsrv                    |
+| Host            | 172.16.0.239              |
+| Isolation Level | SQLSRV_TXN_READ_COMMITTED |
 
-- **Proses & Filter:** Mengevaluasi kredensial akses dan mencocokkan profil dealer/cabang.
-- **Output Mapping:** Menghasilkan dataset _single-row_ yang diikat ke variabel sesi (`$_SESSION`):
-- `DEALER_NAME`, `AREA_NEW`, `DEALER_CODE`, `BRANCH`, `DEALER_ID`.
+### Connection Resiliency
 
-### B. Master Asset Retrieval (`Dashboard_Master_Asset`)
+- Automatic reconnection
+- Maximum retry: 3 attempts
+- Adaptive retry interval: 2–10 detik
 
-Proses ekstraksi hierarki kendaraan terstruktur dalam tiga tingkat agregasi menggunakan kondisi fiter `LTRIM(RTRIM())` untuk pembersihan anomali spasi string.
+---
 
-- **Tabel Target:** `Dashboard_Master_Asset`
-- **Dependency Alur:** `Brand (Merk)` -> `Model` -> `Type`.
-- **Query Output:** `UNIT_MERK_NAME`, `UNIT_MODEL_NAME`, `UNIT_TYPE_NAME`, `UNIT_CATEGORY_NAME`, `UNIT_SEGMENT_NAME`.
+# 2. Data Access Layer & Query Security
 
-### C. Maximum Retail Price (MRP) Extraction (`Dashboard_MRP_Asset`)
+Sistem menghindari query interpolation maupun dynamic SQL string construction. Seluruh akses database diimplementasikan melalui:
 
-Pengambilan nilai taksiran standar kendaraan (MRP) dikendalikan melalui sistem hirarki _Area_.
+- Stored Procedure
+- Prepared Statement
+- Parameterized T-SQL
 
-- **Tabel Target:** `Dashboard_MRP_Asset`
-- **Filter Logic:** Berdasarkan parameter `UNIT_TYPE_NAME`, `UNIT_TAHUN`.
-- **Special Condition:**
-  Jika sesi _user_ adalah 'HO' (_Head Office_), sistem mengabaikan filter spesifik `AREA` dan menjalankan agregasi pengelompokan (DISTINCT) untuk menarik seluruh data MRP dalam setiap area. Jika _user_ adalah cabang/dealer reguler, filter dibatasi strictly pada `AREA` terkait dengan _sorting_ `UNIT_MRP DESC`.
+Data Access Layer juga menyediakan local in-memory caching untuk mengurangi frekuensi query terhadap Data Warehouse.
 
-### D. Dealer Discount Calculation (`M_AREA_DEALER_KHUSUS`)
+## Cache Strategy
 
-- **Query Tujuan:** Batasan redundansi diskon untuk entitas spesifik.
-- **Input Parameter:** `DEALER_ID`.
-- **Output:** Field `DISCOUNT_REFUND`. Melakukan normalisasi hasil, jika hasil komputasi _database_ < 0, program akan mereduksi nilainya secara absolut menjadi 0.
+Cache dikelola pada: `DatabaseService::$cache`
 
-## 3. Finansial & Business Logic Engine (`CalculationService`)
+dengan konfigurasi:
 
-Core kalkulasi angsuran yang terkoordinir secara terpusat. State management dari setiap request dijaga oleh `FinancingProvider` yang memvalidasi _request flow_ sebelum mentransfer beban proses ke `CalculationService`.
+| Dataset             |      TTL |
+| ------------------- | -------: |
+| Default Query Cache |  300 sec |
+| Historical MRP      |  600 sec |
+| Discount Refund     | 1800 sec |
 
-### A. Validasi LTV (Loan-to-Value) & Threshold Down Payment
+Cache bersifat request-local dan digunakan untuk dataset dengan karakteristik read-heavy.
 
-Sistem mengeksekusi validasi persentase batas bawah _Down Payment_ (DP) yang bersifat dinamis berdasarkan parameter Geografis / `AREA_NEW`.
+---
 
-- **Zona 25% Threshold DP:** KALIMANTAN, IBT, SULAWESI, SUMBAGSEL, SUMBAGUT&TENG.
-- **Zona 20% Threshold DP:** JABODETABEKSER, JABAR, JATENG, JATIM.
+# 3. Database Objects & Stored Procedure Layer
 
-### B. Arsitektur Pokok Hutang (PH)
+## 3.1 Authentication Module
 
-Perhitungan pendanaan dirancang secara _multi-stage pipeline_:
+Autentikasi dealer dilakukan sepenuhnya pada database layer.
 
-1. **Pokok Hutang 1 (PH1):**
-   Murni `MRP Pengajuan - Total DP`.
-   (Calculation failed jika <= 0).
+### Stored Procedure
 
-2. **Biaya Fidusia:**
-   Ditentukan melalui pemetaan statis multi-tier (Range: Rp 50.000.000 -> Rp 215.000; hingga limit teratas > Rp 500.000.000 -> Rp 1.015.000).
+`SP_LOGIN_CHECK_DEALER`
 
-3. **Total Premi Asuransi:**
-   Ditentukan secara terpisah sesuai dengan kategori dalam _Insurance Region_ (1-3), Tenor, dan Nilai OTR.
+### Input Parameters
 
-4. **Pokok Hutang 2 (PH2):**
-   `PH1 + Biaya Administrasi Tetap (Rp 6.000.000) + Biaya Fidusia + Total Premi Asuransi`.
+| Parameter | Description            |
+| --------- | ---------------------- |
+| Username  | Dealer username        |
+| Password  | MD5 encrypted password |
 
-5. **Pokok Hutang 3 (PH3):**
-   Menambahkan persentase Biaya Provisi ke dalam `PH2`.
+### Output Dataset
 
-6. **Total Pokok Hutang Final:**
-   `PH3 + Biaya Life Insurance`.
+Stored Procedure menghasilkan single-row dataset yang dipetakan ke session state:
 
-### C. Komputasi Angsuran & Interest Rate
+| Session Variable | Description       |
+| ---------------- | ----------------- |
+| DEALER_ID        | Dealer identifier |
+| DEALER_NAME      | Dealer name       |
+| DEALER_CODE      | Dealer code       |
+| AREA_NEW         | Regional mapping  |
+| BRANCH           | Dealer branch     |
 
-- **Base Target:**
-  Kalkulasi persentase _Effective Rate Akhir_ berdasarkan variabel Tenor, Nego Bunga, Dealer ID, Kategori dan Segmen Unit, serta Tahun Unit.
+Jika autentikasi gagal maka session tidak diinisialisasi.
 
-- **Konversi Flat Rate:**
-  _Effective Rate_ dikonversi secara matematis menjadi _Final Flat Rate_ untuk menyesuaikan metode komputasi ADDB (_Angsuran Dibayar di Belakang_) atau ADDM (_Angsuran Dibayar di Muka_).
+---
 
-- **Total Bunga:**
-  `Final Flat Rate * (Tenor / 12) * Total Pokok Hutang Final`.
+## 3.2 Master Asset Extraction
 
-- **Angsuran per Bulan:**
-  `(Total Pokok Hutang Final + Total Bunga) / Tenor`.
-  Nilai difinalisasi dengan pembulatan ke skala ribuan terdekat (_Round to Nearest Thousand_).
+Data master kendaraan diperoleh melalui table `Dashboard_Master_Asset`. Table ini membangun hierarki:
 
-### D. Kalkulasi Refund & Pelunasan
+- Merk
+- Model
+- Type
+- Unit Category
+- Unit Segment
 
-Struktur perhitungan insentif dealer (_Refund_) dengan algoritma:
+### Output Dataset
 
-1. **Refund Base:**
-   `Didefinisikan bernilai tetap sebesar 14% dari `Total Bunga`.
+| Field              | Description      |
+| ------------------ | ---------------- |
+| UNIT_MERK_NAME     | Vehicle brand    |
+| UNIT_MODEL_NAME    | Vehicle model    |
+| UNIT_TYPE_NAME     | Vehicle type     |
+| UNIT_CATEGORY_NAME | Vehicle category |
+| UNIT_SEGMENT_NAME  | Vehicle segment  |
 
-2. **Net Refund:**
-   ``Refund Base - Discount Refund (Data Ekstraksi Dealer)`.
+---
 
-3. **TDP (Total Down Payment):**
+## 3.3 Maximum Retail Price (MRP)
 
-- Jika Tipe Angsuran = `ADDM`: `DP + Angsuran Pertama`.
-- Jika Tipe Angsuran = `ADDB`: Mutlak bernilai `DP`.
+MRP digunakan sebagai baseline pembiayaan dan validasi LTV melalui table `Dashboard_MRP_Asset`
 
-## 4. State Management Lifecycle
+### Query Parameters
 
-1. **Inisialisasi (Index):**
-   `FinancingProvider` diserialisasi dan dipertahankan dalam variabel `$_SESSION['provider']`.
+| Parameter      | Description        |
+| -------------- | ------------------ |
+| UNIT_TYPE_NAME | Vehicle type       |
+| UNIT_TAHUN     | Manufacturing year |
+| AREA           | Regional filter    |
 
-2. **Mutasi AJAX:**
-   Setiap elemen input pada DOM (Merk, DP, Tenor, Nego Bunga) memicu XHR _Post Request_, mengubah properti internal dari `FinancingCriteria` dan `FinancingDetails`.
+### Processing Logic
 
-3. **Kalkulasi Reaktif:**
-   Aksi `calculate` akan mentrigger validasi _strict_ secara terpusat pada service calculation terkait kesiapan parameter.
+#### Head Office User
 
-4. **Data Persistensi:**
-   Parameter perhitungan yang divalidasi dengan status akhir sukses (_CalculationStatus = true_) langsung dikirim menuju modul log transaksi `DealerRecordService::recordSimulation` untuk kebutuhan analitik operasional lanjutan.
+Jika session mendeteksi pengguna HO:
+
+- Filter AREA diabaikan
+- Query dilakukan secara nasional
+- Nilai maksimum dipilih sebagai MRP Standar.
+
+#### Regular Dealer
+
+Dealer reguler diisolasi berdasarkan kategori AREA dengan memperoleh MRP tertinggi dari seluruh area nasional.
+
+### Output (HO Case)
+
+| Variable     | Description                      |
+| ------------ | -------------------------------- |
+| mrpStandar   | Highest regional or national MRP |
+| mrpPengajuan | Proposed financing MRP           |
+
+---
+
+## 3.4 Dealer Discount Refund
+
+Batas refund dealer diambil dari tabel `M_AREA_DEALER_KHUSUS`
+
+### Query Key
+
+| Field     | Description       |
+| --------- | ----------------- |
+| DEALER_ID | Dealer identifier |
+
+### Output Field
+
+| Field           | Description            |
+| --------------- | ---------------------- |
+| DISCOUNT_REFUND | Refund deduction limit |
+
+### Normalization Rule
+
+Nilai : `DISCOUNT_REFUND < 0` dinormalisasi menjadi `0` guna mencegah negative deduction.
+
+---
+
+# 4. Financial Calculation Engine
+
+Seluruh komputasi pembiayaan dipusatkan pada `CalculationService::calculate()`. Method ini bertindak sebagai deterministic calculation engine yang mentransformasikan FinancingCriteria dan FinancingDetails menjadi `CalculationResult`
+
+---
+
+# 5. Loan Validation & LTV Rules
+
+Validasi minimum DP dilakukan berdasarkan regional mapping.
+
+## Minimum DP Rules
+
+### 25% Requirement
+
+Berlaku untuk:
+
+- KALIMANTAN
+- IBT
+- SULAWESI
+- SUMBAGSEL
+- SUMBAGUT&TENG
+
+### 20% Requirement
+
+Berlaku untuk:
+
+- JABODETABEKSER
+- JABAR
+- JATENG
+- JATIM
+
+### Validation Formula
+
+`Total DP >= mrpPengajuan × minimumDPPercent` (Jika tidak memenuhi threshold, proses kalkulasi dihentikan.)
+
+---
+
+# 6. Multi-Stage Financing Pipeline
+
+## Stage 1 — Pokok Hutang 1 (PH1)
+
+- Rumus : `PH1 = MRP Pengajuan − Total DP`
+- Constraint: `PH1 > 0`. Jika tidak valid, kalkulasi dibatalkan.
+
+---
+
+## Stage 2 — Fidusia Cost
+
+Biaya Fidusia :
+
+| PH1 Range        |   Fidusia |
+| ---------------- | --------: |
+| ≤ 50.000.000     |   215.000 |
+| ≤ 100.000.000    |   265.000 |
+| ≤ 249.999.999    |   365.000 |
+| ≤ 500.000.000    |   615.000 |
+| ≤ 20.000.000.000 | 1.015.000 |
+
+Konfigurasi disimpan pada `CalculationService::$fidusiaRanges`
+
+---
+
+## Stage 3 — Insurance Premium
+
+Premi asuransi dihitung berdasarkan:
+
+- Plafond Exposure
+- Tenor
+- Naximum insurance age limit (7 tahun)
+
+Output dikumulatifkan sebagai `totalPremiAsuransi`
+
+---
+
+## Stage 4 — Pokok Hutang 2 (PH2)
+
+- Rumus : `PH2 = PH1 + Admin Fee + Fidusia + Insurance Premium`
+- Administrative fee : `Rp 6.000.000`
+
+---
+
+## Stage 5 — Pokok Hutang 3 (PH3)
+
+- Biaya provisi dihitung menggunakan `ProvisiCalculator`
+- Rumus : `PH3 = PH2 + Provisi`
+
+---
+
+## Stage 6 — Final Principal
+
+- Life insurance dihitung menggunakan `LifeInsuranceCalculator`
+- Rumus : `Total Pokok Hutang = PH3 + Life Insurance`
+- Nilai ini akan digunakan sebagai Principal Financing Final.
+
+---
+
+# 7. Interest, Installment & Account Receivable
+
+## Effective Rate Processing
+
+Sistem menentukan EffectiveRateAkhr dan Final Flat Rate berdasarkan:
+
+- Unit Segment
+- Year
+- Dealer ID
+- Discount bunga
+- Tipe angsuran
+
+Mendukung tipe angsuran:
+
+- ADDM
+- ADDB
+
+## Total Interest Formula
+
+- Rumus : `Total Bunga = Final Flat Rate × (Tenor/12) × Total Pokok Hutang`
+
+## Total Net AR
+
+- Rumus : `Net AR = Total Pokok Hutang + Total Bunga`
+
+## Monthly Installment
+
+- Rumus : `Net AR / Tenor`
+- Implementasi menggunakan thousand rounding `round(($netAR / $tenor) / 1000) * 1000` untuk menghasilkan nominal angsuran standar.
+
+---
+
+# 8. Dealer Financial Variables
+
+## Refund
+
+- Rumus : `Refund = (14% × Total Bunga) − Discount Refund`
+- Constraint : `Refund >= 0`
+- Negative result distandarisasi menjadi nol.
+
+## Total Down Payment (TDP)
+
+- Rumus ADDM : `TDP = DP + Angsuran`
+- Rumus ADDB : `TDP = DP`
+
+## Pelunasan Pokok
+
+- Rumus : `Pelunasan Pokok = MRP Pengajuan − TDP`
+
+## All-In
+
+- Rumus : `All-In = Refund + PH1`
+- Nilai ini merepresentasikan kontribusi pendapatan dealer terhadap pembiayaan.
+
+---
+
+# 9. Session Lifecycle & State Management
+
+- State simulasi dikelola melalui `$_SESSION['provider']` yang menyimpan serialisasi `FinancingProvider`
+- Session Lifecycle :
+
+1. User melakukan update melalui DOM
+2. XMLHttpRequest menangani update state
+3. FinancingCriteria diperbarui
+4. Action calculate dipanggil
+5. CalculationService melakukan validasi dan komputasi
+6. CalculationResult dibentuk
+
+Note : Metode digunakan untuk mempertahankan continuity state tanpa dependency framework.
+
+---
+
+# 10. Persistence & Historical Recording
+
+Jika `calculationStatus = true` hasil simulasi diteruskan menuju `DealerRecordService::recordSimulation()`. Service ini bertanggung jawab terhadap:
+
+- Historical logging
+- Dealer activity recording
+- Central reporting integration
+- Audit trail generation
+
+Setiap perhitungan simulasi yang dilakukan akan dicatat sebagai historical financing transaction untuk monitoring dan reporting HO.
+
+---
+
+# Technology Stack
+
+| Component      | Technology                             |
+| -------------- | -------------------------------------- |
+| Language       | PHP Native                             |
+| Database       | Microsoft SQL Server                   |
+| Driver         | sqlsrv                                 |
+| Architecture   | Service-Oriented                       |
+| Session        | PHP Session                            |
+| Query Security | Parameterized Query + Stored Procedure |
+| Communication  | XMLHttpRequest                         |
