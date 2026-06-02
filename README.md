@@ -1,6 +1,6 @@
-# Sistem Simulasi Angsuran Motor Bekas (Mokas) SFI
+# Aplikasi Simulasi Angsuran Motor Bekas (Mokas) SFI
 
-Sistem Simulasi Angsuran Motor Bekas (Mokas) merupakan platform kalkulasi pembiayaan kendaraan bekas yang dikembangkan untuk mendukung proses simulasi kredit angsuran kendaraan untuk dealer mitra SFI. Sistem dibangun menggunakan PHP native tanpa ORM dengan pendekatan service-oriented architecture untuk mempertahankan efisiensi akses database, kontrol penuh query execution, serta stabilitas perhitungan finansial. Sistem ini mengintegrasikan validasi pembiayaan, kalkulasi multi-stage pokok hutang, penentuan bunga, hingga pencatatan historis perhitungan simulasi oleh dealer ke pusat.
+Aplikasi Simulasi Angsuran Motor Bekas (Mokas) merupakan platform kalkulasi pembiayaan kendaraan bekas yang dikembangkan untuk mendukung proses simulasi kredit angsuran kendaraan untuk dealer mitra SFI. Aplikasi dibangun menggunakan PHP native tanpa ORM dengan pendekatan service-oriented architecture untuk mempertahankan efisiensi akses database, kontrol penuh query execution, serta stabilitas perhitungan finansial. Aplikasi ini mengintegrasikan validasi pembiayaan, kalkulasi multi-stage pokok hutang, penentuan bunga, hingga pencatatan historis perhitungan simulasi oleh dealer ke pusat.
 
 ---
 
@@ -42,7 +42,7 @@ Untuk memastikan hanya satu koneksi aktif yang digunakan sepanjang lifecycle req
 
 # 2. Data Access Layer & Query Security
 
-Sistem menghindari query interpolation maupun dynamic SQL string construction. Seluruh akses database diimplementasikan melalui:
+Aplikasi menghindari query interpolation maupun dynamic SQL string construction. Seluruh akses database diimplementasikan melalui:
 
 - Stored Procedure
 - Prepared Statement
@@ -278,7 +278,7 @@ Output dikumulatifkan sebagai `totalPremiAsuransi`
 
 ## Effective Rate Processing
 
-Sistem menentukan EffectiveRateAkhr dan Final Flat Rate berdasarkan:
+Aplikasi menentukan EffectiveRateAkhr dan Final Flat Rate berdasarkan:
 
 - Unit Segment
 - Year
