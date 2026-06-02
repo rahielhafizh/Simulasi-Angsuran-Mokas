@@ -1,0 +1,9 @@
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/img/simulasi-app.webp"
+  min_sdk_android: 21
+  
+  # OPTIONAL: Custom adaptive icon untuk Android
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/img/simulasi-app.webp"
