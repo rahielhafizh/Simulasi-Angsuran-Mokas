@@ -61,15 +61,19 @@ if (!is_array($decoded)) {
     exit;
 }
 
+// EKSTRAKSI DATA BARU
 $cert = $decoded['cert'] ?? null;
 $companyName = is_array($cert) ? trim((string) ($cert['companyName'] ?? '')) : '';
+$status = is_array($cert) ? trim((string) ($cert['status'] ?? '')) : '';
 
 $isFound = $companyName !== '' && strtoupper($companyName) !== 'N/A';
 
+// PEMBARUAN RESPONSE JSON
 echo json_encode([
     'success' => true,
     'found' => $isFound,
     'certified_to' => $isFound ? $companyName : 'N/A',
+    'status' => $isFound && $status !== '' ? $status : 'N/A',
 ]);
 
 function sendViaCurl(string $url, string $jsonPayload): ?string

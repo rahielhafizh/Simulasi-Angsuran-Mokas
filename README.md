@@ -1,12 +1,12 @@
 # Aplikasi Simulasi Angsuran Motor Bekas (Mokas) SFI
 
-Aplikasi Simulasi Angsuran Motor Bekas (Mokas) merupakan platform kalkulasi pembiayaan kendaraan bekas yang dikembangkan untuk mendukung proses simulasi kredit angsuran kendaraan untuk dealer mitra SFI. Aplikasi dibangun menggunakan PHP native tanpa ORM dengan pendekatan service-oriented architecture untuk mempertahankan efisiensi akses database, kontrol penuh query execution, serta stabilitas perhitungan finansial. Aplikasi ini mengintegrasikan validasi pembiayaan, kalkulasi multi-stage pokok hutang, penentuan bunga, hingga pencatatan historis perhitungan simulasi oleh dealer ke pusat.
+Aplikasi Simulasi Angsuran Motor Bekas (Mokas) merupakan platform kalkulasi pembiayaan kendaraan bekas yang dikembangkan untuk mendukung proses simulasi kredit angsuran kendaraan untuk dealer mitra SFI. Aplikasi dibangun menggunakan PHP nativen dengan pendekatan service-oriented architecture untuk mempertahankan efisiensi akses database, mengoptimalkan query execution, serta stabilitas sistem kalkulasi finansial. Aplikasi ini mengintegrasikan validasi berbagai tipe pembiayaan, kalkulasi multi-stage pokok hutang, penentuan bunga, hingga pencatatan historis perhitungan simulasi oleh dealer ke pusat.
 
 ---
 
 # 1. System Architecture
 
-Seluruh komunikasi database dilakukan melalui Data Access Layer terpusat menggunakan pola Singleton. Arsitektur aplikasi mengadopsi pendekatan Service-Oriented dengan pemisahan tanggung jawab pada lapisan :
+Seluruh komunikasi database dilakukan melalui Data Access Layer dengan pola Singleton. Arsitektur aplikasi menggunakan pendekatan Service-Oriented dengan pemisahan tanggung jawab antar layer :
 
 | Layer              | Responsibility                                                         |
 | ------------------ | ---------------------------------------------------------------------- |
@@ -18,9 +18,7 @@ Seluruh komunikasi database dilakukan melalui Data Access Layer terpusat menggun
 
 ## Database Connection Strategy
 
-Untuk memastikan hanya satu koneksi aktif yang digunakan sepanjang lifecycle request, koneksi SQL Server dikelola melalui:
-
-`Database::getInstance()`
+Untuk memastikan hanya satu koneksi aktif yang digunakan sepanjang lifecycle request, koneksi SQL Server dikelola melalui `Database::getInstance()`
 
 ### Database Configuration
 
@@ -42,7 +40,7 @@ Untuk memastikan hanya satu koneksi aktif yang digunakan sepanjang lifecycle req
 
 # 2. Data Access Layer & Query Security
 
-Aplikasi menghindari query interpolation maupun dynamic SQL string construction. Seluruh akses database diimplementasikan melalui:
+Untuk menghindari query interpolation maupun dynamic SQL string construction. Seluruh akses database diimplementasikan melalui :
 
 - Stored Procedure
 - Prepared Statement
@@ -52,9 +50,7 @@ Data Access Layer juga menyediakan local in-memory caching untuk mengurangi frek
 
 ## Cache Strategy
 
-Cache dikelola pada: `DatabaseService::$cache`
-
-dengan konfigurasi:
+Cache dikelola pada: `DatabaseService::$cache` dengan konfigurasi:
 
 | Dataset             |      TTL |
 | ------------------- | -------: |
@@ -62,7 +58,7 @@ dengan konfigurasi:
 | Historical MRP      |  600 sec |
 | Discount Refund     | 1800 sec |
 
-Cache bersifat request-local dan digunakan untuk dataset dengan karakteristik read-heavy.
+Note : Cache bersifat request-local dan digunakan untuk dataset dengan karakteristik read-heavy.
 
 ---
 
@@ -70,13 +66,7 @@ Cache bersifat request-local dan digunakan untuk dataset dengan karakteristik re
 
 ## 3.1 Authentication Module
 
-Autentikasi dealer dilakukan sepenuhnya pada database layer.
-
-### Stored Procedure
-
-`SP_LOGIN_CHECK_DEALER`
-
-### Input Parameters
+Autentikasi dealer dilakukan sepenuhnya pada database layer menggunakan `SP_LOGIN_CHECK_DEALER`.
 
 | Parameter | Description            |
 | --------- | ---------------------- |
@@ -85,7 +75,7 @@ Autentikasi dealer dilakukan sepenuhnya pada database layer.
 
 ### Output Dataset
 
-Stored Procedure menghasilkan single-row dataset yang dipetakan ke session state:
+`SP_LOGIN_CHECK_DEALER` menghasilkan single-row dataset yang dipetakan ke session state :
 
 | Session Variable | Description       |
 | ---------------- | ----------------- |
@@ -95,13 +85,13 @@ Stored Procedure menghasilkan single-row dataset yang dipetakan ke session state
 | AREA_NEW         | Regional mapping  |
 | BRANCH           | Dealer branch     |
 
-Jika autentikasi gagal maka session tidak diinisialisasi.
+Note : Jika autentikasi gagal maka session tidak diinisialisasi.
 
 ---
 
 ## 3.2 Master Asset Extraction
 
-Data master kendaraan diperoleh melalui table `Dashboard_Master_Asset`. Table ini membangun hierarki:
+Data master kendaraan diperoleh melalui table `Dashboard_Master_Asset`. Table ini membangun hierarki :
 
 - Merk
 - Model
@@ -137,11 +127,11 @@ MRP digunakan sebagai baseline pembiayaan dan validasi LTV melalui table `Dashbo
 
 #### Head Office User
 
-Jika session mendeteksi pengguna HO:
+Jika session mendeteksi user account HO :
 
 - Filter AREA diabaikan
 - Query dilakukan secara nasional
-- Nilai maksimum dipilih sebagai MRP Standar.
+- Nilai MRP tertinggi antar AREA dipilih sebagai MRP Standar.
 
 #### Regular Dealer
 

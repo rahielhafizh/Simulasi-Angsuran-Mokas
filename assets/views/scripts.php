@@ -46,9 +46,11 @@
             }
 
             if (data.found) {
-                showVehicleResult('success', 'Hasil Pengecekan', null, data.certified_to);
+                // UPDATE: Meneruskan data.status ke dalam fungsi render antarmuka
+                showVehicleResult('success', 'Hasil Pengecekan', null, data.certified_to, data.status);
             } else {
-                showVehicleResult('danger', 'Hasil Pengecekan', null, 'N/A');
+                // Mengirimkan N/A jika kendaraan tidak ditemukan / tidak ada sertifikat
+                showVehicleResult('danger', 'Hasil Pengecekan', null, 'N/A', 'N/A');
             }
 
         } catch (err) {
@@ -60,7 +62,8 @@
         }
     }
 
-    function showVehicleResult(status, heading, errorMessage, certifiedTo) {
+    // UPDATE: Menambahkan parameter ke-5 yaitu vehicleStatus
+    function showVehicleResult(status, heading, errorMessage, certifiedTo, vehicleStatus) {
         const result = document.getElementById('vehicleCheckResult');
 
         result.className = 'vehicle-check-result status-' + status;
@@ -70,10 +73,19 @@
                 '<div class="vehicle-check-result-heading">' + escapeHtml(heading) + '</div>' +
                 '<span class="vehicle-check-certified-label">' + escapeHtml(errorMessage) + '</span>';
         } else {
+            // UPDATE: Menambahkan struktur UI untuk Status tepat di bawah Certified to
+            // Menggunakan pembungkus <div> untuk memastikan label baru turun ke baris berikutnya
             result.innerHTML =
                 '<div class="vehicle-check-result-heading">' + escapeHtml(heading) + '</div>' +
-                '<span class="vehicle-check-certified-label">Certified to : </span>' +
-                '<span class="vehicle-check-certified-value">' + escapeHtml(certifiedTo ?? 'N/A') + '</span>';
+                '<div style="margin-bottom: 6px;">' +
+                    '<span class="vehicle-check-certified-label">Certified to : </span>' +
+                    '<span class="vehicle-check-certified-value">' + escapeHtml(certifiedTo ?? 'N/A') + '</span>' +
+                '</div>' +
+                '<div>' +
+                    '<span class="vehicle-check-certified-label">Status : </span>' +
+                    // Menggunakan text-transform uppercase agar format seperti 'INACTIVE' tetap konsisten dan kapital
+                    '<span class="vehicle-check-certified-value" style="text-transform: uppercase;">' + escapeHtml(vehicleStatus ?? 'N/A') + '</span>' +
+                '</div>';
         }
 
         result.style.display = 'block';
@@ -123,4 +135,4 @@
         updateMRPDetailModal(initialData);
         <?php endif; ?>
     });
-</script>
+</script> 
