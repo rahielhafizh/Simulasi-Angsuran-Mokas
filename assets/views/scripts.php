@@ -8,10 +8,9 @@
     }
 
     async function searchVehicle() {
-        const input  = document.getElementById('vehicleFrameInput');
-        const btn    = document.getElementById('vehicleCheckBtn');
+        const input = document.getElementById('vehicleFrameInput');
+        const btn = document.getElementById('vehicleCheckBtn');
         const result = document.getElementById('vehicleCheckResult');
-
         const nomorRangka = input.value.trim();
 
         if (nomorRangka === '') {
@@ -19,9 +18,9 @@
             return;
         }
 
-        btn.disabled   = true;
+        btn.disabled = true;
         input.disabled = true;
-        btn.textContent = 'Mencari...';
+        btn.textContent = 'Harap Tunggu...';
         result.style.display = 'none';
         result.className = 'vehicle-check-result';
 
@@ -35,7 +34,7 @@
             });
 
             if (!response.ok) {
-                throw new Error('Terjadi kesalahan jaringan. Silakan coba lagi.');
+                throw new Error('Jaringan tidak stabil. Silakan coba lagi.');
             }
 
             const data = await response.json();
@@ -46,23 +45,34 @@
             }
 
             if (data.found) {
-                // UPDATE: Meneruskan data.status ke dalam fungsi render antarmuka
-                showVehicleResult('success', 'Hasil Pengecekan', null, data.certified_to, data.status);
+                const vehicleStatus = (data.status || 'N/A').toUpperCase();
+                const uiClass = (vehicleStatus === 'INACTIVE' || vehicleStatus === 'N/A')
+                    ? 'danger'
+                    : 'success';
+
+                showVehicleResult(
+                    uiClass,
+                    'Hasil Pengecekan',
+                    null,
+                    data.certified_to,
+                    data.status
+                );
             } else {
-                // Mengirimkan N/A jika kendaraan tidak ditemukan / tidak ada sertifikat
                 showVehicleResult('danger', 'Hasil Pengecekan', null, 'N/A', 'N/A');
             }
-
         } catch (err) {
-            showVehicleResult('danger', 'Hasil Pengecekan', err.message ?? 'Terjadi kesalahan. Silakan coba lagi.');
+            showVehicleResult(
+                'danger',
+                'Hasil Pengecekan',
+                err.message ?? 'Terjadi kesalahan. Silakan coba lagi.'
+            );
         } finally {
-            btn.disabled    = false;
-            input.disabled  = false;
+            btn.disabled = false;
+            input.disabled = false;
             btn.textContent = 'Cari';
         }
     }
 
-    // UPDATE: Menambahkan parameter ke-5 yaitu vehicleStatus
     function showVehicleResult(status, heading, errorMessage, certifiedTo, vehicleStatus) {
         const result = document.getElementById('vehicleCheckResult');
 
@@ -70,21 +80,28 @@
 
         if (errorMessage) {
             result.innerHTML =
-                '<div class="vehicle-check-result-heading">' + escapeHtml(heading) + '</div>' +
-                '<span class="vehicle-check-certified-label">' + escapeHtml(errorMessage) + '</span>';
+                '<div class="vehicle-check-result-heading" style="text-align:center; margin-bottom:10px;">' +
+                    escapeHtml(heading) +
+                '</div>' +
+                '<span class="vehicle-check-certified-label">' +
+                    escapeHtml(errorMessage) +
+                '</span>';
         } else {
-            // UPDATE: Menambahkan struktur UI untuk Status tepat di bawah Certified to
-            // Menggunakan pembungkus <div> untuk memastikan label baru turun ke baris berikutnya
             result.innerHTML =
-                '<div class="vehicle-check-result-heading">' + escapeHtml(heading) + '</div>' +
+                '<div class="vehicle-check-result-heading" style="text-align:center; margin-bottom:10px;">' +
+                    escapeHtml(heading) +
+                '</div>' +
                 '<div style="margin-bottom: 6px;">' +
                     '<span class="vehicle-check-certified-label">Certified to : </span>' +
-                    '<span class="vehicle-check-certified-value">' + escapeHtml(certifiedTo ?? 'N/A') + '</span>' +
+                    '<span class="vehicle-check-certified-value">' +
+                        escapeHtml(certifiedTo ?? 'N/A') +
+                    '</span>' +
                 '</div>' +
                 '<div>' +
                     '<span class="vehicle-check-certified-label">Status : </span>' +
-                    // Menggunakan text-transform uppercase agar format seperti 'INACTIVE' tetap konsisten dan kapital
-                    '<span class="vehicle-check-certified-value" style="text-transform: uppercase;">' + escapeHtml(vehicleStatus ?? 'N/A') + '</span>' +
+                    '<span class="vehicle-check-certified-value" style="text-transform: uppercase;">' +
+                        escapeHtml(vehicleStatus ?? 'N/A') +
+                    '</span>' +
                 '</div>';
         }
 
@@ -101,7 +118,9 @@
     }
 
     document.getElementById('vehicleFrameInput')?.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') searchVehicle();
+        if (e.key === 'Enter') {
+            searchVehicle();
+        }
     });
 
     document.addEventListener('click', function(e) {
@@ -129,10 +148,12 @@
                 . $provider->finalCriteria->model . ' '
                 . $provider->finalCriteria->type . ' '
                 . $provider->finalCriteria->tahun
-            : '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+            : '',
+        JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
     ); ?>
         };
+
         updateMRPDetailModal(initialData);
         <?php endif; ?>
     });
-</script> 
+</script>
