@@ -1,10 +1,15 @@
 <?php
+// financingProvider.php
 
-require_once __DIR__ . '/../models/financingCriteria.php';
-require_once __DIR__ . '/../models/financingDetails.php';
-require_once __DIR__ . '/../models/calculationResult.php';
+require_once __DIR__ . '/../models/financingModels.php';
 require_once __DIR__ . '/../services/calculationService.php';
 require_once __DIR__ . '/../services/databaseService.php';
+
+use FinancingCriteria;
+use FinancingDetails;
+use CalculationResult;
+use DatabaseService;
+use CalculationService;
 
 class FinancingProvider
 {
@@ -35,6 +40,7 @@ class FinancingProvider
         $this->dealerId = null;
     }
 
+    // SET CRITERIA & DETAILS
     public function updateTypeAngsuran($value)
     {
         $this->finalCriteria->typeAngsuran = $value;
@@ -123,6 +129,7 @@ class FinancingProvider
         $this->resetCalculation();
     }
 
+    // DEALER REFUND DISCOUNT
     public function loadDiscountRefund($dealerId)
     {
         if (empty($dealerId)) {
@@ -143,6 +150,7 @@ class FinancingProvider
         }
     }
 
+    // UNIT CLASSIFICATION (CATEGORY & SEGMENT)
     private function loadUnitCategoryAndSegment($type)
     {
         if (empty($type)) {
@@ -175,6 +183,7 @@ class FinancingProvider
         $this->finalCriteria->unitSegmentName = null;
     }
 
+    // MRP STANDAR RESOLUTION
     private function updateMRPStandar()
     {
         if (empty($this->finalCriteria->type) || empty($this->finalCriteria->tahun)) {
@@ -186,18 +195,12 @@ class FinancingProvider
         try {
             $area = $_SESSION['area_new'] ?? null;
             $isHOUser = strtoupper(trim($area)) === 'HO';
-
             error_log('UPDATE MRP STANDAR - AREA: ' . ($area ?? 'NULL') . ' | IS_HO: ' . ($isHOUser ? 'YES' : 'NO'));
             error_log('UPDATE MRP STANDAR - TYPE: ' . $this->finalCriteria->type . ' | YEAR: ' . $this->finalCriteria->tahun);
 
             if ($isHOUser) {
                 error_log('UPDATE MRP STANDAR - HO User detected, fetching all MRP by area');
-
-                $this->mrpByArea = DatabaseService::getAllMRPByArea(
-                    $this->finalCriteria->type,
-                    $this->finalCriteria->tahun
-                );
-
+                $this->mrpByArea = DatabaseService::getAllMRPByArea($this->finalCriteria->type, $this->finalCriteria->tahun);
                 error_log('UPDATE MRP STANDAR - Found ' . count($this->mrpByArea) . ' areas with MRP data');
 
                 if (!empty($this->mrpByArea)) {
@@ -221,7 +224,6 @@ class FinancingProvider
                 }
             } else {
                 error_log('UPDATE MRP STANDAR - Regular user, fetching MRP for area: ' . $area);
-
                 $mrpData = DatabaseService::getMRPData(
                     $this->finalCriteria->merk,
                     $this->finalCriteria->model,
@@ -255,10 +257,10 @@ class FinancingProvider
         error_log('RESET MRP STANDAR - All MRP values cleared');
     }
 
+    // CALCULATION
     public function canCalculate()
     {
-        return $this->finalCriteria->checkValidation() &&
-            $this->finalDetails->checkValidation();
+        return $this->finalCriteria->checkValidation() && $this->finalDetails->checkValidation();
     }
 
     public function calculate()

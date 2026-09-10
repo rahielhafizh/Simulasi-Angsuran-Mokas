@@ -1,4 +1,5 @@
 <?php
+// index.php
 
 session_start();
 
@@ -7,21 +8,26 @@ if (!isset($_SESSION['user_logged_in']) || $_SESSION['user_logged_in'] !== true)
     exit;
 }
 
+use DatabaseService;
+use FinancingProvider;
+use DropdownOptions;
+use CurrencyFormatter;
+use DealerRecordService;
+
 require_once 'config/appColors.php';
 require_once 'config/appConstants.php';
 require_once 'config/database.php';
-require_once 'models/financingCriteria.php';
-require_once 'models/financingDetails.php';
-require_once 'models/calculationResult.php';
+require_once 'models/financingModels.php';
 require_once 'providers/financingProvider.php';
 require_once 'services/databaseService.php';
-require_once 'services/dealerRecordService.php';
 require_once 'utils/dropdownOptions.php';
 require_once 'utils/currencyFormatter.php';
+
 
 $dealerId = $_SESSION['dealer_id'] ?? null;
 
 if (!isset($_SESSION['provider']) || !isset($_SESSION['provider_dealer_id']) || $_SESSION['provider_dealer_id'] !== $dealerId) {
+    // PROVIDER DIBUAT ULANG JIKA SESI BERUBAH AGAR DISCOUNT REFUND TIDAK TERBAWA DARI USER SEBELUMNYA.
     $provider = new FinancingProvider();
     if ($dealerId !== null) {
         $provider->loadDiscountRefund($dealerId);
@@ -36,6 +42,7 @@ if (!isset($_SESSION['provider']) || !isset($_SESSION['provider_dealer_id']) || 
     }
 }
 
+// AJAX REQUEST HANDLER (XHR — JSON RESPONSE)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
     header('Content-Type: application/json');
 
@@ -57,22 +64,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
             case 'update_merk':
                 $provider->updateMerk($_POST['value']);
                 $response['data'] = [
-                    'models' => DatabaseService::getModelsByBrand($_POST['value'])
+                    'models' => DatabaseService::getModelsByBrand($_POST['value']),
                 ];
                 break;
 
             case 'update_model':
                 $provider->updateModel($_POST['value']);
                 $response['data'] = [
-                    'types' => DatabaseService::getTypesByBrandAndModel($provider->finalCriteria->merk, $_POST['value'])
+                    'types' => DatabaseService::getTypesByBrandAndModel($provider->finalCriteria->merk, $_POST['value']),
                 ];
                 break;
 
             case 'update_type':
                 $provider->updateType($_POST['value']);
-
                 $mrpDifferencePercentage = null;
                 $mrpDifferenceNominal = null;
+
                 if ($provider->mrpStandar > 0 && $provider->finalDetails->mrpPengajuan > 0) {
                     $nominalDiff = $provider->finalDetails->mrpPengajuan - $provider->mrpStandar;
                     $percentDiff = ($nominalDiff / $provider->mrpStandar) * 100;
@@ -103,7 +110,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
 
                 $responseMRPDifferencePercentage = $isHOUser ? null : $mrpDifferencePercentage;
                 $responseMRPDifferenceNominal = $isHOUser ? null : $mrpDifferenceNominal;
-
                 $response['data'] = [
                     'mrpStandar' => $provider->mrpStandar,
                     'mrpStandarMessage' => $provider->mrpStandarMessage,
@@ -114,15 +120,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                     'hasMultipleArea' => count($mrpByAreaFormatted) > 0,
                     'showDetailMRPButton' => $showDetailMRPButton,
                     'isHOUser' => $isHOUser,
-                    'unitInfo' => $unitInfo
+                    'unitInfo' => $unitInfo,
                 ];
                 break;
 
             case 'update_tahun':
                 $provider->updateTahun($_POST['value']);
-
                 $mrpDifferencePercentage = null;
                 $mrpDifferenceNominal = null;
+
                 if ($provider->mrpStandar > 0 && $provider->finalDetails->mrpPengajuan > 0) {
                     $nominalDiff = $provider->finalDetails->mrpPengajuan - $provider->mrpStandar;
                     $percentDiff = ($nominalDiff / $provider->mrpStandar) * 100;
@@ -153,7 +159,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
 
                 $responseMRPDifferencePercentage = $isHOUser ? null : $mrpDifferencePercentage;
                 $responseMRPDifferenceNominal = $isHOUser ? null : $mrpDifferenceNominal;
-
                 $response['data'] = [
                     'mrpStandar' => $provider->mrpStandar,
                     'mrpStandarMessage' => $provider->mrpStandarMessage,
@@ -164,7 +169,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                     'hasMultipleArea' => count($mrpByAreaFormatted) > 0,
                     'showDetailMRPButton' => $showDetailMRPButton,
                     'isHOUser' => $isHOUser,
-                    'unitInfo' => $unitInfo
+                    'unitInfo' => $unitInfo,
                 ];
                 break;
 
@@ -186,12 +191,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
 
             case 'update_mrp':
                 $provider->updateMRPPengajuan(CurrencyFormatter::parse($_POST['value']));
-
                 $mrpDifferencePercentage = null;
                 $mrpDifferenceNominal = null;
                 $area = $_SESSION['area_new'] ?? null;
                 $isHOUser = strtoupper(trim($area ?? '')) === 'HO';
-
                 if (!$isHOUser && $provider->mrpStandar > 0 && $provider->finalDetails->mrpPengajuan > 0) {
                     $nominalDiff = $provider->finalDetails->mrpPengajuan - $provider->mrpStandar;
                     $percentDiff = ($nominalDiff / $provider->mrpStandar) * 100;
@@ -203,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                 $response['data'] = [
                     'mrpDifferencePercentage' => $mrpDifferencePercentage,
                     'mrpDifferenceNominal' => $mrpDifferenceNominal,
-                    'isHOUser' => $isHOUser
+                    'isHOUser' => $isHOUser,
                 ];
                 break;
 
@@ -211,7 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                 $provider->updateDP(CurrencyFormatter::parse($_POST['value']));
                 $response['data'] = [
                     'dpPercentage' => $provider->finalDetails->mrpPengajuan > 0 ? number_format(($provider->finalDetails->dp / $provider->finalDetails->mrpPengajuan) * 100, 1) . ' %' : null,
-                    'tdpPreview' => $provider->finalDetails->dp > 0 ? CurrencyFormatter::formatWithSymbol($provider->finalDetails->dp) : 'Rp 0'
+                    'tdpPreview' => $provider->finalDetails->dp > 0 ? CurrencyFormatter::formatWithSymbol($provider->finalDetails->dp) : 'Rp 0',
                 ];
                 break;
 
@@ -246,7 +249,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                 $response['data'] = [
                     'calculationStatus' => $provider->calculationStatus,
                     'errorValidation' => $provider->errorValidation,
-                    'result' => $provider->calculationStatus ? $provider->finalResult->toArray() : null
+                    'result' => $provider->calculationStatus ? $provider->finalResult->toArray() : null,
                 ];
                 break;
 
@@ -262,7 +265,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
         $response['provider'] = [
             'canCalculate' => $provider->canCalculate(),
             'calculationStatus' => $provider->calculationStatus,
-            'errorValidation' => $provider->errorValidation
+            'errorValidation' => $provider->errorValidation,
         ];
     } catch (Exception $e) {
         $response['success'] = false;
@@ -272,6 +275,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
     echo json_encode($response);
     exit;
 }
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
@@ -402,6 +406,7 @@ if (isset($provider->mrpByArea) && is_array($provider->mrpByArea) && count($prov
 
 $showDetailMRPButton = $isHOUser && count($mrpByAreaFormatted) > 0;
 
+// PENAMBAHAN DETAIL RESULT UNTUK AREA TERTENTU
 $shouldShowExtendedResults = false;
 $areaNew = $_SESSION['area_new'] ?? null;
 if ($areaNew !== null) {
@@ -409,4 +414,5 @@ if ($areaNew !== null) {
     $shouldShowExtendedResults = in_array($areaNewUpper, ['JATIM', 'SUMBAGSEL', 'SUMBAGUT&TENG'], true);
 }
 
-require_once 'assets/views/financing-form.php';
+
+require_once 'assets/views/financingForm.php';

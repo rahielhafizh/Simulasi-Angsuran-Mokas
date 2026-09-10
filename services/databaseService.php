@@ -1,6 +1,9 @@
+<!-- databaseService.php -->
 <?php
 
 require_once __DIR__ . '/../config/database.php';
+
+use Database;
 
 class DatabaseService
 {
@@ -388,5 +391,361 @@ class DatabaseService
             error_log('DEALER ID : ' . $dealerId);
             return 0;
         }
+    }
+}
+
+class DealerRecordService
+{
+    private static function sanitizeText($text)
+    {
+        if ($text === null || $text === '') {
+            return null;
+        }
+
+        $decoded = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        return trim($decoded);
+    }
+
+    private static function validateDealerData($dealerId, $dealerName)
+    {
+        $cleanDealerId = self::sanitizeText($dealerId);
+        $cleanDealerName = self::sanitizeText($dealerName);
+
+        if (empty($cleanDealerId)) {
+            throw new Exception('DEALER_ID CANNOT BE NULL OR EMPTY');
+        }
+
+        if (empty($cleanDealerName)) {
+            throw new Exception('DEALER_NAME CANNOT BE NULL OR EMPTY');
+        }
+
+        return true;
+    }
+
+    private static function validateSimulationData($criteria, $details)
+    {
+        if ($criteria->tahun !== null) {
+            $currentYear = (int) date('Y');
+            $tahun = (int) $criteria->tahun;
+
+            if ($tahun < 1900 || $tahun > ($currentYear + 1)) {
+                throw new Exception('TAHUN VALUE OUT OF VALID RANGE');
+            }
+        }
+
+        if ($criteria->tenor !== null && (int) $criteria->tenor <= 0) {
+            throw new Exception('TENOR MUST BE GREATER THAN ZERO');
+        }
+
+        if ($details->mrpPengajuan < 0) {
+            throw new Exception('MRP_PENGAJUAN CANNOT BE NEGATIVE');
+        }
+
+        if ($details->dp < 0) {
+            throw new Exception('DOWNPAYMENT CANNOT BE NEGATIVE');
+        }
+
+        return true;
+    }
+
+    private static function parseNegoBunga($negoBungaString)
+    {
+        if (empty($negoBungaString)) {
+            return null;
+        }
+
+        $cleaned = str_replace(['%', ' ', '+'], '', $negoBungaString);
+        $parsed = floatval($cleaned);
+
+        if ($parsed < 0 || $parsed > 100) {
+            throw new Exception('NEGO_BUNGA MUST BE BETWEEN 0 AND 100');
+        }
+
+        return $parsed;
+    }
+
+    public static function recordSimulation($dealerId, $dealerName, $dealerBranch, $dealerArea, $criteria, $details, $mrpStandar, $calculationResult)
+    {
+        try {
+            self::validateDealerData($dealerId, $dealerName);
+            self::validateSimulationData($criteria, $details);
+
+            $db = Database::getInstance();
+
+            $negoBunga = self::parseNegoBunga($criteria->negoBunga);
+            $tahun = $criteria->tahun !== null ? (int) $criteria->tahun : null;
+            $tenor = $criteria->tenor !== null ? (int) $criteria->tenor : null;
+
+            $mrpStandarValue = ($mrpStandar !== null && $mrpStandar > 0) ? $mrpStandar : 0;
+
+            $dealerIdClean = self::sanitizeText($dealerId);
+            $dealerNameClean = self::sanitizeText($dealerName);
+            $dealerBranchClean = self::sanitizeText($dealerBranch);
+            $dealerAreaClean = self::sanitizeText($dealerArea);
+
+            $allIn = 0;
+            $refund = 0;
+            $pelunasan = 0;
+            $angsuranBulan = 0;
+
+            if ($calculationResult !== null && !$calculationResult->isEmpty()) {
+                $allIn = $calculationResult->allIn > 0 ? $calculationResult->allIn : 0;
+                $refund = $calculationResult->refund > 0 ? $calculationResult->refund : 0;
+                $pelunasan = $calculationResult->pelunasan > 0 ? $calculationResult->pelunasan : 0;
+                $angsuranBulan = $calculationResult->angsuranPerBulan > 0 ? $calculationResult->angsuranPerBulan : 0;
+            }
+
+            $sql = "{call SP_Dealer_Record(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
+
+            $params = [
+                $dealerIdClean,
+                $dealerNameClean,
+                $dealerBranchClean,
+                $dealerAreaClean,
+                $criteria->typeAngsuran,
+                $criteria->kodePlat,
+                $criteria->merk,
+                $criteria->model,
+                $criteria->type,
+                $tahun,
+                $tenor,
+                $negoBunga,
+                $criteria->asuransiUnit,
+                $criteria->passComm,
+                $details->mrpPengajuan > 0 ? $details->mrpPengajuan : null,
+                $mrpStandarValue,
+                $details->dp > 0 ? $details->dp : null,
+                $allIn > 0 ? $allIn : null,
+                $refund > 0 ? $refund : null,
+                $pelunasan > 0 ? $pelunasan : null,
+                $angsuranBulan > 0 ? $angsuranBulan : null
+            ];
+
+            $stmt = $db->query($sql, $params);
+
+            if ($stmt === false) {
+                throw new Exception('FAILED TO EXECUTE SP_DEALER_RECORD');
+            }
+
+            $result = $db->fetchOne($stmt);
+
+            if ($result && isset($result['STATUS']) && $result['STATUS'] === 'SUCCESS') {
+                error_log('DEALER RECORD SAVED - DEALER_ID: ' . $dealerIdClean . ' | DEALER_AREA: ' . $dealerAreaClean . ' | MRP_STANDAR: ' . $mrpStandarValue . ' | CREATE_DATE: ' . ($result['CREATE_DATE'] ?? 'N/A'));
+                return [
+                    'success' => true,
+                    'message' => 'SIMULATION RECORDED SUCCESSFULLY',
+                    'data' => $result
+                ];
+            }
+
+            throw new Exception('UNEXPECTED RESPONSE FROM SP_DEALER_RECORD');
+        } catch (Exception $e) {
+            error_log('ERROR RECORDING DEALER SIMULATION: ' . $e->getMessage());
+            error_log('DEALER_ID: ' . ($dealerId ?? 'NULL') . ' | DEALER_NAME: ' . ($dealerName ?? 'NULL') . ' | DEALER_AREA: ' . ($dealerArea ?? 'NULL'));
+
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+                'data' => null
+            ];
+        }
+    }
+
+    public static function canRecordSimulation($criteria, $details)
+    {
+        try {
+            return $criteria->checkValidation() && $details->checkValidation();
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+}
+
+class LocalDataService
+{
+    private static $cache = [];
+
+    public static function clearCache()
+    {
+        self::$cache = [];
+    }
+
+    private static function getDummyData()
+    {
+        return [
+            'TOYOTA' => [
+                'fields' => ['MERK', 'MODEL', 'TYPE', 'TAHUN', 'MRP', 'TDP', 'LTV'],
+                'data' => [
+                    ['TOYOTA', 'AVANZA', '1.3 E MT', 2020, 200000000, 40000000, 0.8],
+                    ['TOYOTA', 'AVANZA', '1.3 G MT', 2020, 215000000, 43000000, 0.8],
+                    ['TOYOTA', 'AVANZA', '1.5 VELOZ MT', 2021, 250000000, 50000000, 0.8],
+                    ['TOYOTA', 'INNOVA', '2.0 G MT', 2020, 320000000, 64000000, 0.8],
+                    ['TOYOTA', 'INNOVA', '2.4 V AT', 2021, 420000000, 84000000, 0.8],
+                    ['TOYOTA', 'FORTUNER', '2.4 VRZ 4X2 AT', 2020, 480000000, 96000000, 0.8],
+                    ['TOYOTA', 'FORTUNER', '2.7 SRZ 4X2 AT', 2021, 520000000, 104000000, 0.8],
+                ],
+            ],
+            'HONDA' => [
+                'fields' => ['MERK', 'MODEL', 'TYPE', 'TAHUN', 'MRP', 'TDP', 'LTV'],
+                'data' => [
+                    ['HONDA', 'BRIO', 'E MT', 2020, 150000000, 30000000, 0.8],
+                    ['HONDA', 'BRIO', 'RS CVT', 2021, 180000000, 36000000, 0.8],
+                    ['HONDA', 'MOBILIO', 'E MT', 2020, 190000000, 38000000, 0.8],
+                    ['HONDA', 'MOBILIO', 'RS CVT', 2021, 220000000, 44000000, 0.8],
+                    ['HONDA', 'CR-V', '1.5 TURBO CVT', 2020, 450000000, 90000000, 0.8],
+                    ['HONDA', 'CR-V', '1.5 TURBO PRESTIGE', 2021, 520000000, 104000000, 0.8],
+                ],
+            ],
+            'DAIHATSU' => [
+                'fields' => ['MERK', 'MODEL', 'TYPE', 'TAHUN', 'MRP', 'TDP', 'LTV'],
+                'data' => [
+                    ['DAIHATSU', 'AYLA', '1.0 D MT', 2020, 110000000, 22000000, 0.8],
+                    ['DAIHATSU', 'AYLA', '1.2 R MT', 2021, 130000000, 26000000, 0.8],
+                    ['DAIHATSU', 'XENIA', '1.3 R MT', 2020, 190000000, 38000000, 0.8],
+                    ['DAIHATSU', 'XENIA', '1.5 R AT', 2021, 220000000, 44000000, 0.8],
+                    ['DAIHATSU', 'TERIOS', '1.5 X MT', 2020, 230000000, 46000000, 0.8],
+                    ['DAIHATSU', 'TERIOS', '1.5 R AT', 2021, 260000000, 52000000, 0.8],
+                ],
+            ],
+            'MITSUBISHI' => [
+                'fields' => ['MERK', 'MODEL', 'TYPE', 'TAHUN', 'MRP', 'TDP', 'LTV'],
+                'data' => [
+                    ['MITSUBISHI', 'XPANDER', 'GLX MT', 2020, 230000000, 46000000, 0.8],
+                    ['MITSUBISHI', 'XPANDER', 'ULTIMATE AT', 2021, 280000000, 56000000, 0.8],
+                    ['MITSUBISHI', 'PAJERO SPORT', 'EXCEED 4X2 AT', 2020, 480000000, 96000000, 0.8],
+                    ['MITSUBISHI', 'PAJERO SPORT', 'DAKAR 4X4 AT', 2021, 580000000, 116000000, 0.8],
+                ],
+            ],
+            'SUZUKI' => [
+                'fields' => ['MERK', 'MODEL', 'TYPE', 'TAHUN', 'MRP', 'TDP', 'LTV'],
+                'data' => [
+                    ['SUZUKI', 'ERTIGA', 'GL MT', 2020, 200000000, 40000000, 0.8],
+                    ['SUZUKI', 'ERTIGA', 'GX AT', 2021, 230000000, 46000000, 0.8],
+                    ['SUZUKI', 'XL7', 'BETA AT', 2020, 240000000, 48000000, 0.8],
+                    ['SUZUKI', 'XL7', 'ZETA AT', 2021, 260000000, 52000000, 0.8],
+                ],
+            ],
+        ];
+    }
+
+    public static function getBrands()
+    {
+        return ['DAIHATSU', 'HONDA', 'MITSUBISHI', 'SUZUKI', 'TOYOTA'];
+    }
+
+    public static function getModelsByBrand($brand)
+    {
+        if (empty($brand))
+            return [];
+
+        $dummyData = self::getDummyData();
+        if (!isset($dummyData[$brand]))
+            return [];
+
+        $data = $dummyData[$brand]['data'];
+        $fields = $dummyData[$brand]['fields'];
+        $modelIndex = array_search('MODEL', $fields);
+
+        if ($modelIndex === false)
+            return [];
+
+        $models = [];
+        foreach ($data as $row) {
+            if (isset($row[$modelIndex]) && !in_array($row[$modelIndex], $models)) {
+                $models[] = $row[$modelIndex];
+            }
+        }
+
+        sort($models);
+        return $models;
+    }
+
+    public static function getTypesByBrandAndModel($brand, $model)
+    {
+        if (empty($brand) || empty($model))
+            return [];
+
+        $dummyData = self::getDummyData();
+        if (!isset($dummyData[$brand]))
+            return [];
+
+        $data = $dummyData[$brand]['data'];
+        $fields = $dummyData[$brand]['fields'];
+        $modelIndex = array_search('MODEL', $fields);
+        $typeIndex = array_search('TYPE', $fields);
+
+        if ($modelIndex === false || $typeIndex === false)
+            return [];
+
+        $types = [];
+        foreach ($data as $row) {
+            if (isset($row[$modelIndex]) && $row[$modelIndex] === $model && isset($row[$typeIndex]) && !in_array($row[$typeIndex], $types)) {
+                $types[] = $row[$typeIndex];
+            }
+        }
+
+        sort($types);
+        return $types;
+    }
+
+    public static function getMRPData($brand, $model, $type, $year)
+    {
+        if (empty($brand) || empty($model) || empty($type) || empty($year))
+            return null;
+
+        $dummyData = self::getDummyData();
+        if (!isset($dummyData[$brand]))
+            return null;
+
+        $data = $dummyData[$brand]['data'];
+        $fields = $dummyData[$brand]['fields'];
+        $modelIndex = array_search('MODEL', $fields);
+        $typeIndex = array_search('TYPE', $fields);
+        $yearIndex = array_search('TAHUN', $fields);
+        $mrpIndex = array_search('MRP', $fields);
+        $tdpIndex = array_search('TDP', $fields);
+        $ltvIndex = array_search('LTV', $fields);
+
+        if ($modelIndex === false || $typeIndex === false || $yearIndex === false)
+            return null;
+
+        $targetYear = intval($year);
+
+        foreach ($data as $row) {
+            if (
+                isset($row[$modelIndex]) && $row[$modelIndex] === $model &&
+                isset($row[$typeIndex]) && $row[$typeIndex] === $type &&
+                isset($row[$yearIndex]) && intval($row[$yearIndex]) === $targetYear
+            ) {
+                $otr = isset($row[$mrpIndex]) ? floatval($row[$mrpIndex]) : 0;
+
+                return [
+                    'mrp' => $otr,
+                    'tdp' => isset($row[$tdpIndex]) ? floatval($row[$tdpIndex]) : 0,
+                    'ltv' => isset($row[$ltvIndex]) ? floatval($row[$ltvIndex]) : 0,
+                    'otr' => $otr,
+                ];
+            }
+        }
+
+        return null;
+    }
+
+    public static function calculateFidusia($otr)
+    {
+        if ($otr <= 0)
+            return 0;
+        if ($otr <= 50000000)
+            return 215000;
+        if ($otr <= 100000000)
+            return 265000;
+        if ($otr <= 249999999)
+            return 365000;
+        if ($otr <= 500000000)
+            return 615000;
+        if ($otr <= 20000000000)
+            return 1015000;
+
+        return 0;
     }
 }

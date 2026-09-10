@@ -1,3 +1,4 @@
+<!-- dropdownOptions.php -->
 <?php
 
 class DropdownOptions
@@ -105,14 +106,47 @@ class DropdownOptions
         }
 
         $region1 = ['BA', 'BB', 'BD', 'BE', 'BG', 'BH', 'BK', 'BL', 'BM', 'BN', 'BP'];
-
         $region2 = ['A', 'B', 'D', 'E', 'F', 'T', 'Z'];
-
         $region3 = [
-            'G', 'H', 'K', 'R', 'AA', 'AB', 'AD', 'L', 'M', 'N', 'P', 'S', 'W',
-            'AE', 'AG', 'DH', 'DK', 'DR', 'EA', 'EB', 'ED', 'DA', 'KB', 'KH',
-            'KT', 'KU', 'DB', 'DC', 'DD', 'DL', 'DM', 'DN', 'DP', 'DT', 'DW',
-            'DE', 'DG', 'PA', 'PB'
+            'G',
+            'H',
+            'K',
+            'R',
+            'AA',
+            'AB',
+            'AD',
+            'L',
+            'M',
+            'N',
+            'P',
+            'S',
+            'W',
+            'AE',
+            'AG',
+            'DH',
+            'DK',
+            'DR',
+            'EA',
+            'EB',
+            'ED',
+            'DA',
+            'KB',
+            'KH',
+            'KT',
+            'KU',
+            'DB',
+            'DC',
+            'DD',
+            'DL',
+            'DM',
+            'DN',
+            'DP',
+            'DT',
+            'DW',
+            'DE',
+            'DG',
+            'PA',
+            'PB'
         ];
 
         if (in_array($kodePlat, $region1, true)) {

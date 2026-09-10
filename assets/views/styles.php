@@ -1,7 +1,5 @@
 <style>
-
     /* ─── Reset & Base ───────────────────────────────────────────────── */
-
     * {
         margin: 0;
         padding: 0;
@@ -10,8 +8,12 @@
 
     body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        background-color: <?php echo AppColors::BACKGROUND; ?>;
-        color: <?php echo AppColors::TEXT_PRIMARY; ?>;
+        background-color:
+            <?php echo AppColors::BACKGROUND; ?>
+        ;
+        color:
+            <?php echo AppColors::TEXT_PRIMARY; ?>
+        ;
         line-height: 1.6;
     }
 
@@ -22,9 +24,10 @@
     }
 
     /* ─── Header ─────────────────────────────────────────────────────── */
-
     .header {
-        background-color: <?php echo AppColors::WHITE; ?>;
+        background-color:
+            <?php echo AppColors::WHITE; ?>
+        ;
         padding: 24px 20px 20px 20px;
         margin-bottom: 16px;
         border-radius: 12px;
@@ -34,7 +37,9 @@
 
     .header h1 {
         font-size: 24px;
-        color: <?php echo AppColors::TEXT_PRIMARY; ?>;
+        color:
+            <?php echo AppColors::TEXT_PRIMARY; ?>
+        ;
         text-align: center;
         margin-bottom: 20px;
         font-weight: 600;
@@ -54,7 +59,9 @@
 
     .dealer-name {
         font-size: 15px;
-        color: <?php echo AppColors::TEXT_PRIMARY; ?>;
+        color:
+            <?php echo AppColors::TEXT_PRIMARY; ?>
+        ;
         font-weight: 600;
     }
 
@@ -65,7 +72,6 @@
     }
 
     /* ─── Dropdown Menu ──────────────────────────────────────────────── */
-
     .menu-container {
         position: relative;
     }
@@ -105,7 +111,9 @@
         display: block;
         width: 100%;
         height: 2.5px;
-        background-color: <?php echo AppColors::TEXT_PRIMARY; ?>;
+        background-color:
+            <?php echo AppColors::TEXT_PRIMARY; ?>
+        ;
         border-radius: 2px;
     }
 
@@ -113,7 +121,9 @@
         position: absolute;
         top: calc(100% + 8px);
         right: 0;
-        background-color: <?php echo AppColors::WHITE; ?>;
+        background-color:
+            <?php echo AppColors::WHITE; ?>
+        ;
         border: 1px solid #E5E7EB;
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -133,6 +143,7 @@
             opacity: 0;
             transform: translateY(-8px);
         }
+
         to {
             opacity: 1;
             transform: translateY(0);
@@ -144,7 +155,9 @@
         align-items: center;
         gap: 12px;
         padding: 12px 16px;
-        color: <?php echo AppColors::TEXT_PRIMARY; ?>;
+        color:
+            <?php echo AppColors::TEXT_PRIMARY; ?>
+        ;
         text-decoration: none;
         font-size: 14px;
         font-weight: 500;
@@ -170,13 +183,16 @@
     }
 
     /* ─── Vehicle Check Section ──────────────────────────────────────── */
-
     .vehicle-check-section {
-        background-color: <?php echo AppColors::WHITE; ?>;
+        background-color:
+            <?php echo AppColors::WHITE; ?>
+        ;
         padding: 20px;
         margin-bottom: 20px;
         border-radius: 12px;
-        border: 1px solid <?php echo AppColors::BORDER; ?>;
+        border: 1px solid
+            <?php echo AppColors::BORDER; ?>
+        ;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
     }
 
@@ -184,7 +200,9 @@
         font-size: 16px;
         font-weight: 700;
         text-align: center;
-        color: <?php echo AppColors::TEXT_PRIMARY; ?>;
+        color:
+            <?php echo AppColors::TEXT_PRIMARY; ?>
+        ;
         margin-bottom: 16px;
         letter-spacing: 0.04em;
     }
@@ -205,21 +223,31 @@
         border: 1px solid #D1D5DB;
         border-radius: 8px;
         font-size: 14px;
-        background-color: <?php echo AppColors::BACKGROUND; ?>;
-        color: <?php echo AppColors::TEXT_PRIMARY; ?>;
+        background-color:
+            <?php echo AppColors::BACKGROUND; ?>
+        ;
+        color:
+            <?php echo AppColors::TEXT_PRIMARY; ?>
+        ;
         transition: border-color 0.2s, background-color 0.2s;
         box-sizing: border-box;
     }
 
     .vehicle-check-input::placeholder {
-        color: <?php echo AppColors::TEXT_LIGHT; ?>;
+        color:
+            <?php echo AppColors::TEXT_LIGHT; ?>
+        ;
         font-size: 13px;
     }
 
     .vehicle-check-input:focus {
         outline: none;
-        border-color: <?php echo AppColors::INFO; ?>;
-        background-color: <?php echo AppColors::WHITE; ?>;
+        border-color:
+            <?php echo AppColors::INFO; ?>
+        ;
+        background-color:
+            <?php echo AppColors::WHITE; ?>
+        ;
     }
 
     .vehicle-check-input:disabled {
@@ -232,7 +260,9 @@
         height: 44px;
         padding: 0 18px;
         background-color: #1E3A8A;
-        color: <?php echo AppColors::WHITE; ?>;
+        color:
+            <?php echo AppColors::WHITE; ?>
+        ;
         border: none;
         border-radius: 8px;
         font-size: 13px;
@@ -266,14 +296,22 @@
 
     .vehicle-check-result.status-success {
         background-color: #ECFDF5;
-        border-color: <?php echo AppColors::SUCCESS; ?>;
-        color: <?php echo AppColors::SUCCESS; ?>;
+        border-color:
+            <?php echo AppColors::SUCCESS; ?>
+        ;
+        color:
+            <?php echo AppColors::SUCCESS; ?>
+        ;
     }
 
     .vehicle-check-result.status-danger {
         background-color: #FEF2F2;
-        border-color: <?php echo AppColors::DANGER; ?>;
-        color: <?php echo AppColors::DANGER; ?>;
+        border-color:
+            <?php echo AppColors::DANGER; ?>
+        ;
+        color:
+            <?php echo AppColors::DANGER; ?>
+        ;
     }
 
     .vehicle-check-result-heading {
@@ -290,9 +328,10 @@
     }
 
     /* ─── Form Section ───────────────────────────────────────────────── */
-
     .form-section {
-        background-color: <?php echo AppColors::FORM_BACKGROUND; ?>;
+        background-color:
+            <?php echo AppColors::FORM_BACKGROUND; ?>
+        ;
         padding: 20px;
         margin-bottom: 20px;
         border-radius: 12px;
@@ -304,7 +343,9 @@
         font-size: 18px;
         margin-bottom: 20px;
         text-align: center;
-        color: <?php echo AppColors::TEXT_PRIMARY; ?>;
+        color:
+            <?php echo AppColors::TEXT_PRIMARY; ?>
+        ;
         font-weight: 600;
     }
 
@@ -317,7 +358,9 @@
         font-size: 14px;
         font-weight: 600;
         margin-bottom: 8px;
-        color: <?php echo AppColors::TEXT_PRIMARY; ?>;
+        color:
+            <?php echo AppColors::TEXT_PRIMARY; ?>
+        ;
     }
 
     .form-group select,
@@ -326,10 +369,14 @@
         width: 100%;
         height: 52px;
         padding: 0 16px;
-        border: 1px solid <?php echo AppColors::BORDER; ?>;
+        border: 1px solid
+            <?php echo AppColors::BORDER; ?>
+        ;
         border-radius: 8px;
         font-size: 14px;
-        background-color: <?php echo AppColors::WHITE; ?>;
+        background-color:
+            <?php echo AppColors::WHITE; ?>
+        ;
         transition: border-color 0.2s;
     }
 
@@ -353,7 +400,6 @@
     }
 
     /* ─── DP Input ───────────────────────────────────────────────────── */
-
     .dp-wrapper {
         display: flex;
         gap: 8px;
@@ -370,12 +416,13 @@
         align-items: center;
         font-size: 14px;
         font-weight: 500;
-        color: <?php echo AppColors::PRIMARY; ?>;
+        color:
+            <?php echo AppColors::PRIMARY; ?>
+        ;
         white-space: nowrap;
     }
 
     /* ─── Buttons ────────────────────────────────────────────────────── */
-
     .btn {
         padding: 14px 32px;
         border: none;
@@ -387,7 +434,9 @@
     }
 
     .btn-primary {
-        background-color: <?php echo AppColors::PRIMARY; ?>;
+        background-color:
+            <?php echo AppColors::PRIMARY; ?>
+        ;
         color: white;
     }
 
@@ -396,7 +445,9 @@
     }
 
     .btn-primary:disabled {
-        background-color: <?php echo AppColors::DISABLED; ?>;
+        background-color:
+            <?php echo AppColors::DISABLED; ?>
+        ;
         cursor: not-allowed;
         opacity: 0.6;
     }
@@ -434,7 +485,6 @@
     }
 
     /* ─── Alert ──────────────────────────────────────────────────────── */
-
     .alert {
         padding: 12px 16px;
         margin-bottom: 16px;
@@ -446,19 +496,24 @@
     }
 
     /* ─── Result Section ─────────────────────────────────────────────── */
-
     .result-section {
-        background-color: <?php echo AppColors::WHITE; ?>;
+        background-color:
+            <?php echo AppColors::WHITE; ?>
+        ;
         padding: 20px;
         border-radius: 12px;
-        border: 1px solid <?php echo AppColors::BORDER; ?>;
+        border: 1px solid
+            <?php echo AppColors::BORDER; ?>
+        ;
         margin-bottom: 20px;
     }
 
     .result-section h2 {
         font-size: 18px;
         margin-bottom: 20px;
-        color: <?php echo AppColors::TEXT_PRIMARY; ?>;
+        color:
+            <?php echo AppColors::TEXT_PRIMARY; ?>
+        ;
         font-weight: 600;
     }
 
@@ -468,22 +523,35 @@
         align-items: center;
         margin-bottom: 12px;
         padding: 12px 0;
+        border-bottom: 1px dashed #E5E7EB;
+    }
+
+    .result-card:last-child {
+        border-bottom: none;
     }
 
     .result-card label {
         font-size: 14px;
         font-weight: 600;
-        color: <?php echo AppColors::TEXT_PRIMARY; ?>;
+        color:
+            <?php echo AppColors::TEXT_PRIMARY; ?>
+        ;
     }
 
     .result-card .value {
         padding: 12px 16px;
-        background-color: <?php echo AppColors::WHITE; ?>;
-        border: 1px solid <?php echo AppColors::SUCCESS; ?>;
+        background-color:
+            <?php echo AppColors::WHITE; ?>
+        ;
+        border: 1px solid
+            <?php echo AppColors::SUCCESS; ?>
+        ;
         border-radius: 8px;
         font-size: 14px;
         font-weight: 500;
-        color: <?php echo AppColors::SUCCESS; ?>;
+        color:
+            <?php echo AppColors::SUCCESS; ?>
+        ;
         min-width: 180px;
         text-align: right;
     }
@@ -491,16 +559,21 @@
     .detail-section {
         margin-top: 16px;
         padding-top: 16px;
-        border-top: 1px solid <?php echo AppColors::BORDER; ?>;
+        border-top: 1px solid
+            <?php echo AppColors::BORDER; ?>
+        ;
     }
 
     /* ─── TDP & MRP Display ──────────────────────────────────────────── */
-
     .tdp-display,
     .mrp-standar-display {
         padding: 20px;
-        background-color: <?php echo AppColors::BACKGROUND; ?>;
-        border: 1px solid <?php echo AppColors::BORDER; ?>;
+        background-color:
+            <?php echo AppColors::BACKGROUND; ?>
+        ;
+        border: 1px solid
+            <?php echo AppColors::BORDER; ?>
+        ;
         border-radius: 12px;
         display: flex;
         justify-content: space-between;
@@ -512,14 +585,18 @@
     .mrp-standar-display label {
         font-size: 14px;
         font-weight: 600;
-        color: <?php echo AppColors::TEXT_PRIMARY; ?>;
+        color:
+            <?php echo AppColors::TEXT_PRIMARY; ?>
+        ;
     }
 
     .tdp-display .value,
     .mrp-standar-display .value {
         font-size: 14px;
         font-weight: 600;
-        color: <?php echo AppColors::PRIMARY; ?>;
+        color:
+            <?php echo AppColors::PRIMARY; ?>
+        ;
         display: flex;
         align-items: center;
         gap: 8px;
@@ -535,10 +612,13 @@
     }
 
     /* ─── MRP List ───────────────────────────────────────────────────── */
-
     .mrp-list-container {
-        background-color: <?php echo AppColors::BACKGROUND; ?>;
-        border: 1px solid <?php echo AppColors::BORDER; ?>;
+        background-color:
+            <?php echo AppColors::BACKGROUND; ?>
+        ;
+        border: 1px solid
+            <?php echo AppColors::BORDER; ?>
+        ;
         border-radius: 12px;
         padding: 16px;
         margin-bottom: 16px;
@@ -548,7 +628,9 @@
         font-size: 14px;
         font-weight: 600;
         margin-bottom: 12px;
-        color: <?php echo AppColors::TEXT_PRIMARY; ?>;
+        color:
+            <?php echo AppColors::TEXT_PRIMARY; ?>
+        ;
     }
 
     .mrp-area-item {
@@ -557,9 +639,13 @@
         align-items: center;
         padding: 12px 16px;
         margin-bottom: 8px;
-        background-color: <?php echo AppColors::WHITE; ?>;
+        background-color:
+            <?php echo AppColors::WHITE; ?>
+        ;
         border-radius: 8px;
-        border: 1px solid <?php echo AppColors::BORDER; ?>;
+        border: 1px solid
+            <?php echo AppColors::BORDER; ?>
+        ;
     }
 
     .mrp-area-item:last-child {
@@ -574,13 +660,17 @@
     .mrp-area-name {
         font-size: 14px;
         font-weight: 600;
-        color: <?php echo AppColors::TEXT_PRIMARY; ?>;
+        color:
+            <?php echo AppColors::TEXT_PRIMARY; ?>
+        ;
     }
 
     .mrp-area-value {
         font-size: 14px;
         font-weight: 500;
-        color: <?php echo AppColors::PRIMARY; ?>;
+        color:
+            <?php echo AppColors::PRIMARY; ?>
+        ;
     }
 
     .mrp-area-item.unavailable .mrp-area-value {
@@ -589,11 +679,14 @@
     }
 
     /* ─── Selisih MRP Display ────────────────────────────────────────── */
-
     .selisih-mrp-display {
         padding: 20px;
-        background-color: <?php echo AppColors::BACKGROUND; ?>;
-        border: 1px solid <?php echo AppColors::BORDER; ?>;
+        background-color:
+            <?php echo AppColors::BACKGROUND; ?>
+        ;
+        border: 1px solid
+            <?php echo AppColors::BORDER; ?>
+        ;
         border-radius: 12px;
         display: flex;
         justify-content: space-between;
@@ -604,7 +697,9 @@
     .selisih-mrp-display label {
         font-size: 14px;
         font-weight: 600;
-        color: <?php echo AppColors::TEXT_PRIMARY; ?>;
+        color:
+            <?php echo AppColors::TEXT_PRIMARY; ?>
+        ;
     }
 
     .selisih-mrp-display .value-group {
@@ -620,13 +715,17 @@
         border-radius: 8px;
         font-size: 14px;
         font-weight: 600;
-        color: <?php echo AppColors::PRIMARY; ?>;
+        color:
+            <?php echo AppColors::PRIMARY; ?>
+        ;
     }
 
     .selisih-mrp-display .nominal {
         font-size: 14px;
         font-weight: 600;
-        color: <?php echo AppColors::TEXT_PRIMARY; ?>;
+        color:
+            <?php echo AppColors::TEXT_PRIMARY; ?>
+        ;
     }
 
     .selisih-mrp-display.positive .percentage {
@@ -642,7 +741,6 @@
     }
 
     /* ─── Modal ──────────────────────────────────────────────────────── */
-
     .modal-overlay {
         display: none;
         position: fixed;
@@ -683,7 +781,9 @@
     .modal-header h3 {
         font-size: 18px;
         font-weight: 600;
-        color: <?php echo AppColors::TEXT_PRIMARY; ?>;
+        color:
+            <?php echo AppColors::TEXT_PRIMARY; ?>
+        ;
     }
 
     .modal-close {
@@ -704,18 +804,21 @@
 
     .modal-close:hover {
         background-color: #F3F4F6;
-        color: <?php echo AppColors::TEXT_PRIMARY; ?>;
+        color:
+            <?php echo AppColors::TEXT_PRIMARY; ?>
+        ;
     }
 
     .modal-unit-info {
         margin-bottom: 16px;
         font-size: 14px;
-        color: <?php echo AppColors::TEXT_PRIMARY; ?>;
+        color:
+            <?php echo AppColors::TEXT_PRIMARY; ?>
+        ;
         font-weight: 500;
     }
 
     /* ─── Responsive: Tablet (max-width: 768px) ──────────────────────── */
-
     @media (max-width: 768px) {
         .header h1 {
             font-size: 20px;
@@ -756,7 +859,6 @@
     }
 
     /* ─── Responsive: Mobile (max-width: 480px) ──────────────────────── */
-
     @media (max-width: 480px) {
         .container {
             padding: 12px;
@@ -782,5 +884,4 @@
             padding: 16px;
         }
     }
-
 </style>

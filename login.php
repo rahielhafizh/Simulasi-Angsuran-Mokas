@@ -1,10 +1,12 @@
 <?php
+// login.php
+
 session_start([
     'cookie_lifetime' => 3600,
     'cookie_httponly' => true,
     'use_strict_mode' => true,
     'sid_length' => 48,
-    'sid_bits_per_character' => 6
+    'sid_bits_per_character' => 6,
 ]);
 
 if (isset($_SESSION['user_logged_in']) && $_SESSION['user_logged_in'] === true) {
@@ -168,7 +170,7 @@ require_once 'config/appColors.php';
                     'invalid' => 'Username atau Password salah.',
                     'empty' => 'Username dan Password harus diisi.',
                     'system' => 'Terjadi kesalahan sistem. Silakan coba lagi.',
-                    'timeout' => 'Koneksi ke server timeout. Silakan coba lagi.'
+                    'timeout' => 'Koneksi ke server timeout. Silakan coba lagi.',
                 ];
                 echo $errorMessages[$_GET['error']] ?? 'Terjadi kesalahan saat login.';
                 ?>
@@ -198,12 +200,12 @@ require_once 'config/appColors.php';
         const submitBtn = document.getElementById('submitBtn');
         const loadingIndicator = document.getElementById('loadingIndicator');
 
-        loginForm.addEventListener('submit', function(e) {
+        loginForm.addEventListener('submit', function (e) {
             submitBtn.disabled = true;
             submitBtn.textContent = 'Memproses...';
             loadingIndicator.classList.add('active');
 
-            setTimeout(function() {
+            setTimeout(function () {
                 if (submitBtn.disabled) {
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Sign In';
