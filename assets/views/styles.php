@@ -1,4 +1,21 @@
 <style>
+    :root {
+        --app-primary: #2563EB;
+        --app-secondary: #6B7280;
+        --app-success: #10B981;
+        --app-danger: #EF4444;
+        --app-warning: #F59E0B;
+        --app-info: #3B82F6;
+        --app-background: #F3F4F6;
+        --app-form-background: #FAFAFA;
+        --app-white: #FFFFFF;
+        --app-text-primary: #1F2937;
+        --app-text-secondary: #6B7280;
+        --app-text-light: #9CA3AF;
+        --app-border: #E5E7EB;
+        --app-disabled: #F3F4F6;
+    }
+
     /* ─── Reset & Base ───────────────────────────────────────────────── */
     * {
         margin: 0;
@@ -8,12 +25,8 @@
 
     body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        background-color:
-            <?php echo AppColors::BACKGROUND; ?>
-        ;
-        color:
-            <?php echo AppColors::TEXT_PRIMARY; ?>
-        ;
+        background-color: var(--app-background);
+        color: var(--app-text-primary);
         line-height: 1.6;
     }
 
@@ -23,11 +36,104 @@
         padding: 20px;
     }
 
+    /* ─── Login Page ─────────────────────────────────────────────────── */
+    .login-page-body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+
+    .login-container {
+        background-color: var(--app-white);
+        padding: 2.5rem;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .login-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .login-header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--app-text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .login-header p {
+        color: var(--app-text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .login-form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .login-form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--app-text-primary);
+    }
+
+    .login-form-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--app-border);
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .login-form-input:focus {
+        outline: none;
+        border-color: var(--app-primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .login-btn-submit {
+        width: 100%;
+        padding: 0.75rem;
+        background-color: var(--app-primary);
+        color: var(--app-white);
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .login-btn-submit:hover:not(:disabled) {
+        background-color: #1D4ED8;
+    }
+
+    .login-btn-submit:disabled {
+        background-color: var(--app-text-secondary);
+        cursor: not-allowed;
+    }
+
+    .login-loading {
+        display: none;
+        text-align: center;
+        margin-top: 0.5rem;
+        color: var(--app-text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .login-loading.active {
+        display: block;
+    }
+
     /* ─── Header ─────────────────────────────────────────────────────── */
     .header {
-        background-color:
-            <?php echo AppColors::WHITE; ?>
-        ;
+        background-color: var(--app-white);
         padding: 24px 20px 20px 20px;
         margin-bottom: 16px;
         border-radius: 12px;
@@ -37,9 +143,7 @@
 
     .header h1 {
         font-size: 24px;
-        color:
-            <?php echo AppColors::TEXT_PRIMARY; ?>
-        ;
+        color: var(--app-text-primary);
         text-align: center;
         margin-bottom: 20px;
         font-weight: 600;
@@ -59,9 +163,7 @@
 
     .dealer-name {
         font-size: 15px;
-        color:
-            <?php echo AppColors::TEXT_PRIMARY; ?>
-        ;
+        color: var(--app-text-primary);
         font-weight: 600;
     }
 
@@ -111,9 +213,7 @@
         display: block;
         width: 100%;
         height: 2.5px;
-        background-color:
-            <?php echo AppColors::TEXT_PRIMARY; ?>
-        ;
+        background-color: var(--app-text-primary);
         border-radius: 2px;
     }
 
@@ -121,9 +221,7 @@
         position: absolute;
         top: calc(100% + 8px);
         right: 0;
-        background-color:
-            <?php echo AppColors::WHITE; ?>
-        ;
+        background-color: var(--app-white);
         border: 1px solid #E5E7EB;
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -155,9 +253,7 @@
         align-items: center;
         gap: 12px;
         padding: 12px 16px;
-        color:
-            <?php echo AppColors::TEXT_PRIMARY; ?>
-        ;
+        color: var(--app-text-primary);
         text-decoration: none;
         font-size: 14px;
         font-weight: 500;
@@ -184,15 +280,11 @@
 
     /* ─── Vehicle Check Section ──────────────────────────────────────── */
     .vehicle-check-section {
-        background-color:
-            <?php echo AppColors::WHITE; ?>
-        ;
+        background-color: var(--app-white);
         padding: 20px;
         margin-bottom: 20px;
         border-radius: 12px;
-        border: 1px solid
-            <?php echo AppColors::BORDER; ?>
-        ;
+        border: 1px solid var(--app-border);
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
     }
 
@@ -200,9 +292,7 @@
         font-size: 16px;
         font-weight: 700;
         text-align: center;
-        color:
-            <?php echo AppColors::TEXT_PRIMARY; ?>
-        ;
+        color: var(--app-text-primary);
         margin-bottom: 16px;
         letter-spacing: 0.04em;
     }
@@ -223,31 +313,21 @@
         border: 1px solid #D1D5DB;
         border-radius: 8px;
         font-size: 14px;
-        background-color:
-            <?php echo AppColors::BACKGROUND; ?>
-        ;
-        color:
-            <?php echo AppColors::TEXT_PRIMARY; ?>
-        ;
+        background-color: var(--app-background);
+        color: var(--app-text-primary);
         transition: border-color 0.2s, background-color 0.2s;
         box-sizing: border-box;
     }
 
     .vehicle-check-input::placeholder {
-        color:
-            <?php echo AppColors::TEXT_LIGHT; ?>
-        ;
+        color: var(--app-text-light);
         font-size: 13px;
     }
 
     .vehicle-check-input:focus {
         outline: none;
-        border-color:
-            <?php echo AppColors::INFO; ?>
-        ;
-        background-color:
-            <?php echo AppColors::WHITE; ?>
-        ;
+        border-color: var(--app-info);
+        background-color: var(--app-white);
     }
 
     .vehicle-check-input:disabled {
@@ -260,9 +340,7 @@
         height: 44px;
         padding: 0 18px;
         background-color: #1E3A8A;
-        color:
-            <?php echo AppColors::WHITE; ?>
-        ;
+        color: var(--app-white);
         border: none;
         border-radius: 8px;
         font-size: 13px;
@@ -296,22 +374,14 @@
 
     .vehicle-check-result.status-success {
         background-color: #ECFDF5;
-        border-color:
-            <?php echo AppColors::SUCCESS; ?>
-        ;
-        color:
-            <?php echo AppColors::SUCCESS; ?>
-        ;
+        border-color: var(--app-success);
+        color: var(--app-success);
     }
 
     .vehicle-check-result.status-danger {
         background-color: #FEF2F2;
-        border-color:
-            <?php echo AppColors::DANGER; ?>
-        ;
-        color:
-            <?php echo AppColors::DANGER; ?>
-        ;
+        border-color: var(--app-danger);
+        color: var(--app-danger);
     }
 
     .vehicle-check-result-heading {
@@ -329,9 +399,7 @@
 
     /* ─── Form Section ───────────────────────────────────────────────── */
     .form-section {
-        background-color:
-            <?php echo AppColors::FORM_BACKGROUND; ?>
-        ;
+        background-color: var(--app-form-background);
         padding: 20px;
         margin-bottom: 20px;
         border-radius: 12px;
@@ -343,9 +411,7 @@
         font-size: 18px;
         margin-bottom: 20px;
         text-align: center;
-        color:
-            <?php echo AppColors::TEXT_PRIMARY; ?>
-        ;
+        color: var(--app-text-primary);
         font-weight: 600;
     }
 
@@ -358,25 +424,20 @@
         font-size: 14px;
         font-weight: 600;
         margin-bottom: 8px;
-        color:
-            <?php echo AppColors::TEXT_PRIMARY; ?>
-        ;
+        color: var(--app-text-primary);
     }
 
+    /* Dipertahankan untuk fallback native elements (misal input text/number) */
     .form-group select,
     .form-group input[type="text"],
     .form-group input[type="number"] {
         width: 100%;
         height: 52px;
         padding: 0 16px;
-        border: 1px solid
-            <?php echo AppColors::BORDER; ?>
-        ;
+        border: 1px solid var(--app-border);
         border-radius: 8px;
         font-size: 14px;
-        background-color:
-            <?php echo AppColors::WHITE; ?>
-        ;
+        background-color: var(--app-white);
         transition: border-color 0.2s;
     }
 
@@ -391,6 +452,150 @@
         background-color: #F3F4F6;
         cursor: not-allowed;
         opacity: 0.6;
+    }
+
+    /* ─── Custom UI Dropdown (Modern Styling) ────────────────────────── */
+    .custom-select-container {
+        position: relative;
+        width: 100%;
+    }
+
+    .custom-select-trigger {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        height: 52px;
+        padding: 0 16px;
+        border: 1px solid var(--app-border);
+        border-radius: 8px;
+        font-size: 14px;
+        background-color: var(--app-white);
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        user-select: none;
+        outline: none;
+    }
+
+    .custom-select-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding-right: 12px;
+    }
+
+    .custom-select-trigger:hover:not(.disabled) {
+        border-color: #9CA3AF;
+    }
+
+    .custom-select-trigger:focus-visible:not(.disabled) {
+        border-color: var(--app-info);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .custom-select-trigger.active {
+        border-color: var(--app-info);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .custom-select-trigger.disabled {
+        background-color: var(--app-disabled);
+        cursor: not-allowed;
+        opacity: 0.6;
+        color: var(--app-text-light);
+    }
+
+    .custom-select-arrow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        flex-shrink: 0;
+    }
+
+    .custom-select-trigger.active .custom-select-arrow {
+        transform: rotate(180deg);
+    }
+
+    .custom-select-arrow svg {
+        width: 18px;
+        height: 18px;
+        stroke: var(--app-text-secondary);
+    }
+
+    .custom-select-options {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        background-color: var(--app-white);
+        border: 1px solid var(--app-border);
+        border-radius: 8px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        max-height: 260px;
+        overflow-y: auto;
+        z-index: 50;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .custom-select-options.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    .custom-select-options::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-select-options::-webkit-scrollbar-track {
+        background: transparent;
+        margin: 4px 0;
+    }
+
+    .custom-select-options::-webkit-scrollbar-thumb {
+        background-color: #D1D5DB;
+        border-radius: 8px;
+    }
+
+    .custom-select-options::-webkit-scrollbar-thumb:hover {
+        background-color: #9CA3AF;
+    }
+
+    .custom-select-option {
+        padding: 12px 16px;
+        font-size: 14px;
+        color: var(--app-text-primary);
+        cursor: pointer;
+        transition: background-color 0.15s ease, color 0.15s ease;
+        display: flex;
+        align-items: center;
+        line-height: 1.4;
+        word-break: break-word;
+    }
+
+    .custom-select-option:first-child {
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+    }
+
+    .custom-select-option:last-child {
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+
+    .custom-select-option:hover {
+        background-color: #EFF6FF;
+        color: var(--app-info);
+    }
+
+    .custom-select-option.selected {
+        background-color: #E0E7FF;
+        color: #1E40AF;
+        font-weight: 600;
     }
 
     .form-row {
@@ -416,9 +621,7 @@
         align-items: center;
         font-size: 14px;
         font-weight: 500;
-        color:
-            <?php echo AppColors::PRIMARY; ?>
-        ;
+        color: var(--app-primary);
         white-space: nowrap;
     }
 
@@ -434,9 +637,7 @@
     }
 
     .btn-primary {
-        background-color:
-            <?php echo AppColors::PRIMARY; ?>
-        ;
+        background-color: var(--app-primary);
         color: white;
     }
 
@@ -445,9 +646,7 @@
     }
 
     .btn-primary:disabled {
-        background-color:
-            <?php echo AppColors::DISABLED; ?>
-        ;
+        background-color: var(--app-disabled);
         cursor: not-allowed;
         opacity: 0.6;
     }
@@ -497,23 +696,17 @@
 
     /* ─── Result Section ─────────────────────────────────────────────── */
     .result-section {
-        background-color:
-            <?php echo AppColors::WHITE; ?>
-        ;
+        background-color: var(--app-white);
         padding: 20px;
         border-radius: 12px;
-        border: 1px solid
-            <?php echo AppColors::BORDER; ?>
-        ;
+        border: 1px solid var(--app-border);
         margin-bottom: 20px;
     }
 
     .result-section h2 {
         font-size: 18px;
         margin-bottom: 20px;
-        color:
-            <?php echo AppColors::TEXT_PRIMARY; ?>
-        ;
+        color: var(--app-text-primary);
         font-weight: 600;
     }
 
@@ -533,25 +726,17 @@
     .result-card label {
         font-size: 14px;
         font-weight: 600;
-        color:
-            <?php echo AppColors::TEXT_PRIMARY; ?>
-        ;
+        color: var(--app-text-primary);
     }
 
     .result-card .value {
         padding: 12px 16px;
-        background-color:
-            <?php echo AppColors::WHITE; ?>
-        ;
-        border: 1px solid
-            <?php echo AppColors::SUCCESS; ?>
-        ;
+        background-color: var(--app-white);
+        border: 1px solid var(--app-success);
         border-radius: 8px;
         font-size: 14px;
         font-weight: 500;
-        color:
-            <?php echo AppColors::SUCCESS; ?>
-        ;
+        color: var(--app-success);
         min-width: 180px;
         text-align: right;
     }
@@ -559,21 +744,15 @@
     .detail-section {
         margin-top: 16px;
         padding-top: 16px;
-        border-top: 1px solid
-            <?php echo AppColors::BORDER; ?>
-        ;
+        border-top: 1px solid var(--app-border);
     }
 
     /* ─── TDP & MRP Display ──────────────────────────────────────────── */
     .tdp-display,
     .mrp-standar-display {
         padding: 20px;
-        background-color:
-            <?php echo AppColors::BACKGROUND; ?>
-        ;
-        border: 1px solid
-            <?php echo AppColors::BORDER; ?>
-        ;
+        background-color: var(--app-background);
+        border: 1px solid var(--app-border);
         border-radius: 12px;
         display: flex;
         justify-content: space-between;
@@ -585,18 +764,14 @@
     .mrp-standar-display label {
         font-size: 14px;
         font-weight: 600;
-        color:
-            <?php echo AppColors::TEXT_PRIMARY; ?>
-        ;
+        color: var(--app-text-primary);
     }
 
     .tdp-display .value,
     .mrp-standar-display .value {
         font-size: 14px;
         font-weight: 600;
-        color:
-            <?php echo AppColors::PRIMARY; ?>
-        ;
+        color: var(--app-primary);
         display: flex;
         align-items: center;
         gap: 8px;
@@ -613,12 +788,8 @@
 
     /* ─── MRP List ───────────────────────────────────────────────────── */
     .mrp-list-container {
-        background-color:
-            <?php echo AppColors::BACKGROUND; ?>
-        ;
-        border: 1px solid
-            <?php echo AppColors::BORDER; ?>
-        ;
+        background-color: var(--app-background);
+        border: 1px solid var(--app-border);
         border-radius: 12px;
         padding: 16px;
         margin-bottom: 16px;
@@ -628,9 +799,7 @@
         font-size: 14px;
         font-weight: 600;
         margin-bottom: 12px;
-        color:
-            <?php echo AppColors::TEXT_PRIMARY; ?>
-        ;
+        color: var(--app-text-primary);
     }
 
     .mrp-area-item {
@@ -639,13 +808,9 @@
         align-items: center;
         padding: 12px 16px;
         margin-bottom: 8px;
-        background-color:
-            <?php echo AppColors::WHITE; ?>
-        ;
+        background-color: var(--app-white);
         border-radius: 8px;
-        border: 1px solid
-            <?php echo AppColors::BORDER; ?>
-        ;
+        border: 1px solid var(--app-border);
     }
 
     .mrp-area-item:last-child {
@@ -660,17 +825,13 @@
     .mrp-area-name {
         font-size: 14px;
         font-weight: 600;
-        color:
-            <?php echo AppColors::TEXT_PRIMARY; ?>
-        ;
+        color: var(--app-text-primary);
     }
 
     .mrp-area-value {
         font-size: 14px;
         font-weight: 500;
-        color:
-            <?php echo AppColors::PRIMARY; ?>
-        ;
+        color: var(--app-primary);
     }
 
     .mrp-area-item.unavailable .mrp-area-value {
@@ -681,12 +842,8 @@
     /* ─── Selisih MRP Display ────────────────────────────────────────── */
     .selisih-mrp-display {
         padding: 20px;
-        background-color:
-            <?php echo AppColors::BACKGROUND; ?>
-        ;
-        border: 1px solid
-            <?php echo AppColors::BORDER; ?>
-        ;
+        background-color: var(--app-background);
+        border: 1px solid var(--app-border);
         border-radius: 12px;
         display: flex;
         justify-content: space-between;
@@ -697,9 +854,7 @@
     .selisih-mrp-display label {
         font-size: 14px;
         font-weight: 600;
-        color:
-            <?php echo AppColors::TEXT_PRIMARY; ?>
-        ;
+        color: var(--app-text-primary);
     }
 
     .selisih-mrp-display .value-group {
@@ -715,17 +870,13 @@
         border-radius: 8px;
         font-size: 14px;
         font-weight: 600;
-        color:
-            <?php echo AppColors::PRIMARY; ?>
-        ;
+        color: var(--app-primary);
     }
 
     .selisih-mrp-display .nominal {
         font-size: 14px;
         font-weight: 600;
-        color:
-            <?php echo AppColors::TEXT_PRIMARY; ?>
-        ;
+        color: var(--app-text-primary);
     }
 
     .selisih-mrp-display.positive .percentage {
@@ -781,9 +932,7 @@
     .modal-header h3 {
         font-size: 18px;
         font-weight: 600;
-        color:
-            <?php echo AppColors::TEXT_PRIMARY; ?>
-        ;
+        color: var(--app-text-primary);
     }
 
     .modal-close {
@@ -804,17 +953,13 @@
 
     .modal-close:hover {
         background-color: #F3F4F6;
-        color:
-            <?php echo AppColors::TEXT_PRIMARY; ?>
-        ;
+        color: var(--app-text-primary);
     }
 
     .modal-unit-info {
         margin-bottom: 16px;
         font-size: 14px;
-        color:
-            <?php echo AppColors::TEXT_PRIMARY; ?>
-        ;
+        color: var(--app-text-primary);
         font-weight: 500;
     }
 

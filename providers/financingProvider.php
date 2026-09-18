@@ -5,11 +5,6 @@ require_once __DIR__ . '/../models/financingModels.php';
 require_once __DIR__ . '/../services/calculationService.php';
 require_once __DIR__ . '/../services/databaseService.php';
 
-use FinancingCriteria;
-use FinancingDetails;
-use CalculationResult;
-use DatabaseService;
-use CalculationService;
 
 class FinancingProvider
 {

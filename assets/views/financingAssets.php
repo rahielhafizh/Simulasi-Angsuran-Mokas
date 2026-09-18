@@ -1,5 +1,5 @@
-<!-- financingAssets.php -->
 <?php
+// financingAssets.php
 ?>
 <script src="assets/js/financingForm.js"></script>
 <script>
@@ -18,7 +18,6 @@
         }
     });
 
-    // CEK NOMOR RANGKA (RAPINDO)
     async function searchVehicle() {
         const input = document.getElementById('vehicleFrameInput');
         const btn = document.getElementById('vehicleCheckBtn');
@@ -91,7 +90,6 @@
         result.style.display = 'block';
     }
 
-    // PREVENT INJECTION 
     function escapeHtml(str) {
         return String(str)
             .replace(/&/g, '&amp;')
@@ -107,7 +105,6 @@
         }
     });
 
-    // MRP DETAIL
     document.addEventListener('DOMContentLoaded', function () {
         <?php if ($showDetailMRPButton && count($mrpByAreaFormatted) > 0): ?>
             const initialData = {

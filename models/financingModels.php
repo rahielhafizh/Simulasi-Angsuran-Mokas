@@ -169,7 +169,6 @@ class CalculationResult
 
     public static function empty()
     {
-        // DIISI ARRAY KOSONG KARENA BUKAN NUMERIK DAN TIDAK DIBULATKAN
         return new CalculationResult(0, 0, 0, 0, 0, [], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     }
 

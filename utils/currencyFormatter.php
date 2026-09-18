@@ -1,5 +1,5 @@
-<!-- currencyFormatter.php -->
 <?php
+// currencyFormatter.php
 
 class CurrencyFormatter
 {

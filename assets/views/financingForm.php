@@ -1,8 +1,4 @@
 <!-- financingForm.php -->
-<?php
-use DropdownOptions;
-use CurrencyFormatter;
-?>
 <!DOCTYPE html>
 <html lang="id">
 
@@ -17,13 +13,11 @@ use CurrencyFormatter;
     <?php
     $areaNewRaw = $_SESSION['area_new'] ?? null;
     $areaNew = strtoupper(trim($areaNewRaw ?? ''));
-    // HIGHER MINIMUM DP PERCENTAGE FOR COMPANY POLICY
     $nonJawaAreas = ['KALIMANTAN', 'IBT', 'SULAWESI', 'SUMBAGSEL', 'SUMBAGUT&TENG'];
     $minDpPercentLabel = in_array($areaNew, $nonJawaAreas, true) ? '25%' : '20%';
     ?>
 
     <div class="container">
-        <!-- HEADER SECTION -->
         <div class="header">
             <h1>Simulasi Mobil Bekas</h1>
             <div class="header-bottom">
@@ -53,7 +47,6 @@ use CurrencyFormatter;
             </div>
         </div>
 
-        <!-- SEARCH SECTION -->
         <div class="vehicle-check-section">
             <h2 class="vehicle-check-title">Cek Kendaraan</h2>
             <div class="vehicle-check-form">
@@ -65,16 +58,15 @@ use CurrencyFormatter;
             <div id="vehicleCheckResult" class="vehicle-check-result" style="display: none;"></div>
         </div>
 
-        <!-- ALERT SECTION -->
         <div class="alert" id="error-alert"
             style="display: <?php echo $provider->errorValidation ? 'block' : 'none'; ?>;">
             <span
                 id="error-message"><?php echo htmlspecialchars($provider->errorValidation ?? '', ENT_QUOTES, 'UTF-8'); ?></span>
         </div>
 
-        <!-- KRITERIA PEMBIAYAAN KENDARAAN -->
         <div class="form-section">
             <h2>KRITERIA PEMBIAYAAN KENDARAAN</h2>
+
             <div class="form-group">
                 <label>TYPE ANGSURAN</label>
                 <select id="type-angsuran" onchange="updateField('update_type_angsuran', this.value)">
@@ -198,13 +190,10 @@ use CurrencyFormatter;
             </div>
         </div>
 
-        <!-- DETAIL PENGAJUAN PEMBIAYAAN -->
         <div class="form-section">
             <h2>DETAIL PENGAJUAN PEMBIAYAAN</h2>
 
-            <?php
-            if ($provider->mrpStandarMessage):
-                ?>
+            <?php if ($provider->mrpStandarMessage): ?>
                 <div class="mrp-standar-display unavailable" id="mrp-standar-display">
                     <label>MRP STANDAR</label>
                     <div class="value" id="mrp-standar-value">
@@ -280,7 +269,6 @@ use CurrencyFormatter;
                         style="display: <?php echo $dpPercentage ? 'flex' : 'none'; ?>;">
                         <?php echo htmlspecialchars($dpPercentage ?? '', ENT_QUOTES, 'UTF-8'); ?>
                     </div>
-
                     <input type="text" id="dp-value"
                         value="<?php echo $provider->finalDetails->dp > 0 ? CurrencyFormatter::formatWithoutSymbol($provider->finalDetails->dp) : ''; ?>"
                         placeholder="Masukkan Nominal DP (Min. <?php echo htmlspecialchars($minDpPercentLabel, ENT_QUOTES, 'UTF-8'); ?>)"
@@ -311,7 +299,6 @@ use CurrencyFormatter;
             </div>
         </div>
 
-        <!-- RESULT -->
         <div class="result-section" id="result-section"
             style="display: <?php echo $provider->calculationStatus ? 'block' : 'none'; ?>;">
             <h2>Hasil Simulasi Pembiayaan</h2>
@@ -440,7 +427,6 @@ use CurrencyFormatter;
             </div>
         </div>
 
-        <!-- MODAL MRP -->
         <div id="mrp-detail-modal" class="modal-overlay">
             <div class="modal-content">
                 <div class="modal-header">

@@ -1,5 +1,5 @@
-<!-- dropdownOptions.php -->
 <?php
+// dropdownOptions.php
 
 class DropdownOptions
 {

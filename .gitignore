@@ -1,3 +1,13 @@
-config/database.php
-cacert.pem
-README.md
+# Root files
+/cacert.pem
+/favicon.ico
+/README.md
+
+# Config files
+/config/appConstants.php
+/config/database.php
+
+# Service files
+/services/calculationService.php
+/services/databaseService.php
+/services/dealerRecordService.php

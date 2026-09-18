@@ -1,12 +1,9 @@
-// financingForm.js
-
 function formatCurrency(input) {
   let value = input.value.replace(/[^\d]/g, "");
   input.value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 function formatRupiah(value) {
-  // INSERTING THOUSANDS SEPARATE.
   if (value === 0 || value === "0" || value === null || value === undefined) {
     return "Rp 0";
   }
@@ -23,31 +20,36 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-// UI STATE HELPERS
 function updateCalculateButton(canCalculate) {
   const btn = document.getElementById("calculate-btn");
-  btn.disabled = !canCalculate;
+  if (btn) btn.disabled = !canCalculate;
 }
 
 function showError(message) {
   const errorAlert = document.getElementById("error-alert");
   const errorMessage = document.getElementById("error-message");
-  errorMessage.textContent = message;
-  errorAlert.style.display = "block";
+  if (errorAlert && errorMessage) {
+    errorMessage.textContent = message;
+    errorAlert.style.display = "block";
+  }
 }
 
 function hideError() {
-  document.getElementById("error-alert").style.display = "none";
+  const errorAlert = document.getElementById("error-alert");
+  if (errorAlert) errorAlert.style.display = "none";
 }
 
 function hideResultSection() {
-  document.getElementById("result-section").style.display = "none";
+  const resultSection = document.getElementById("result-section");
+  if (resultSection) resultSection.style.display = "none";
 }
 
 function resetDPPercentage() {
   const dpPercentage = document.getElementById("dp-percentage");
-  dpPercentage.style.display = "none";
-  dpPercentage.textContent = "";
+  if (dpPercentage) {
+    dpPercentage.style.display = "none";
+    dpPercentage.textContent = "";
+  }
 }
 
 function hideSelisihMRP() {
@@ -57,14 +59,12 @@ function hideSelisihMRP() {
   }
 }
 
-// DISPLAY MRP STANDAR & SELISIH
 function updateMRPStandarDisplay(data) {
   const mrpStandarDisplay = document.getElementById("mrp-standar-display");
   const mrpStandarValue = document.getElementById("mrp-standar-value");
   const mrpListContainer = document.getElementById("mrp-list-container");
   const mrpAreaListInline = document.getElementById("mrp-area-list-inline");
 
-  // HO USER GET MRP OF ALL AREA
   if (
     data.isHOUser &&
     data.mrpByArea &&
@@ -154,7 +154,6 @@ function updateSelisihMRPDisplay(percentage, nominal) {
   }
 }
 
-// HANDLE MRP DETAIL MODAL
 function showMRPDetail() {
   const modal = document.getElementById("mrp-detail-modal");
   if (modal) {
@@ -179,6 +178,7 @@ function updateMRPDetailModal(data) {
   const areaList = document.getElementById("mrp-area-list");
   const unitInfo = document.getElementById("modal-unit-info");
   if (!areaList) return;
+
   if (unitInfo && data.unitInfo) {
     unitInfo.textContent = data.unitInfo;
   }
@@ -211,20 +211,31 @@ function updateMRPDetailModal(data) {
   });
 }
 
-// HANDLE FIELD UPDATE (AJAX)
-function updateField(action, value) {
+async function sendAjaxRequest(action, value = null) {
   const formData = new FormData();
   formData.append("action", action);
-  formData.append("value", value);
 
-  fetch(window.location.href, {
+  if (value !== null) {
+    formData.append("value", value);
+  }
+
+  const response = await fetch(window.location.href, {
     method: "POST",
     headers: {
       "X-Requested-With": "XMLHttpRequest",
     },
     body: formData,
-  })
-    .then((response) => response.json())
+  });
+
+  if (!response.ok) {
+    throw new Error("Jaringan tidak stabil atau ada kesalahan pada server.");
+  }
+
+  return await response.json();
+}
+
+function updateField(action, value) {
+  sendAjaxRequest(action, value)
     .then((data) => {
       if (data.success) {
         updateCalculateButton(data.provider.canCalculate);
@@ -236,133 +247,147 @@ function updateField(action, value) {
 }
 
 function updateMerk(value) {
-  const formData = new FormData();
-  formData.append("action", "update_merk");
-  formData.append("value", value);
+  const merkSelect = document.getElementById("merk");
+  const modelSelect = document.getElementById("model");
+  const typeSelect = document.getElementById("type");
 
-  fetch(window.location.href, {
-    method: "POST",
-    headers: {
-      "X-Requested-With": "XMLHttpRequest",
-    },
-    body: formData,
-  })
-    .then((response) => response.json())
+  merkSelect.disabled = true;
+  modelSelect.innerHTML = '<option value="">Mohon Tunggu...</option>';
+  modelSelect.disabled = true;
+  typeSelect.innerHTML = '<option value="">Pilih Type Kendaraan</option>';
+  typeSelect.disabled = true;
+
+  hideMRPStandar();
+  updateCalculateButton(false);
+  hideError();
+  hideResultSection();
+
+  sendAjaxRequest("update_merk", value)
     .then((data) => {
+      merkSelect.disabled = false;
       if (data.success && data.data.models) {
-        const modelSelect = document.getElementById("model");
-        const typeSelect = document.getElementById("type");
         modelSelect.innerHTML =
           '<option value="">Pilih Model Kendaraan</option>';
-
-        data.data.models.forEach((model) => {
-          const option = document.createElement("option");
-          option.value = model;
-          option.textContent = model;
-          modelSelect.appendChild(option);
-        });
-
-        modelSelect.disabled = false;
-        typeSelect.innerHTML = '<option value="">Pilih Type Kendaraan</option>';
-        typeSelect.disabled = true;
-
-        hideMRPStandar();
+        if (data.data.models.length > 0) {
+          data.data.models.forEach((model) => {
+            const option = document.createElement("option");
+            option.value = model;
+            option.textContent = model;
+            modelSelect.appendChild(option);
+          });
+          modelSelect.disabled = false;
+        } else {
+          modelSelect.disabled = true;
+        }
         updateCalculateButton(data.provider.canCalculate);
-        hideError();
-        hideResultSection();
-      }
-    })
-    .catch((error) => console.error("Error:", error));
-}
-
-function updateModel(value) {
-  const formData = new FormData();
-  formData.append("action", "update_model");
-  formData.append("value", value);
-
-  fetch(window.location.href, {
-    method: "POST",
-    headers: {
-      "X-Requested-With": "XMLHttpRequest",
-    },
-    body: formData,
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success && data.data.types) {
-        const typeSelect = document.getElementById("type");
-        typeSelect.innerHTML = '<option value="">Pilih Type Kendaraan</option>';
-
-        data.data.types.forEach((type) => {
-          const option = document.createElement("option");
-          option.value = type;
-          option.textContent = type;
-          typeSelect.appendChild(option);
-        });
-
-        typeSelect.disabled = false;
-        hideMRPStandar();
-        updateCalculateButton(data.provider.canCalculate);
-        hideError();
-        hideResultSection();
-      }
-    })
-    .catch((error) => console.error("Error:", error));
-}
-
-function updateType(value) {
-  const formData = new FormData();
-  formData.append("action", "update_type");
-  formData.append("value", value);
-
-  fetch(window.location.href, {
-    method: "POST",
-    headers: {
-      "X-Requested-With": "XMLHttpRequest",
-    },
-    body: formData,
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success && data.data) {
-        updateMRPStandarDisplay(data.data);
-        updateMRPDetailModal(data.data);
-        updateCalculateButton(data.provider.canCalculate);
-        hideError();
-        hideResultSection();
+      } else {
+        showError("Gagal memuat model kendaraan.");
+        modelSelect.innerHTML =
+          '<option value="">Pilih Model Kendaraan</option>';
       }
     })
     .catch((error) => {
       console.error("Error:", error);
-      window.location.reload();
+      merkSelect.disabled = false;
+      modelSelect.innerHTML = '<option value="">Pilih Model Kendaraan</option>';
+      showError("Koneksi terganggu saat memuat model. Silakan coba lagi.");
+    });
+}
+
+function updateModel(value) {
+  const modelSelect = document.getElementById("model");
+  const typeSelect = document.getElementById("type");
+
+  modelSelect.disabled = true;
+  typeSelect.innerHTML = '<option value="">Mohon Tunggu...</option>';
+  typeSelect.disabled = true;
+
+  hideMRPStandar();
+  updateCalculateButton(false);
+  hideError();
+  hideResultSection();
+
+  sendAjaxRequest("update_model", value)
+    .then((data) => {
+      modelSelect.disabled = false;
+      if (data.success && data.data.types) {
+        typeSelect.innerHTML = '<option value="">Pilih Type Kendaraan</option>';
+        if (data.data.types.length > 0) {
+          data.data.types.forEach((type) => {
+            const option = document.createElement("option");
+            option.value = type;
+            option.textContent = type;
+            typeSelect.appendChild(option);
+          });
+          typeSelect.disabled = false;
+        } else {
+          typeSelect.disabled = true;
+        }
+        updateCalculateButton(data.provider.canCalculate);
+      } else {
+        showError("Gagal memuat type kendaraan.");
+        typeSelect.innerHTML = '<option value="">Pilih Type Kendaraan</option>';
+      }
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+      modelSelect.disabled = false;
+      typeSelect.innerHTML = '<option value="">Pilih Type Kendaraan</option>';
+      showError("Koneksi terganggu saat memuat type. Silakan coba lagi.");
+    });
+}
+
+function updateType(value) {
+  const typeSelect = document.getElementById("type");
+  typeSelect.disabled = true;
+
+  updateCalculateButton(false);
+  hideError();
+  hideResultSection();
+
+  sendAjaxRequest("update_type", value)
+    .then((data) => {
+      typeSelect.disabled = false;
+      if (data.success && data.data) {
+        updateMRPStandarDisplay(data.data);
+        updateMRPDetailModal(data.data);
+        updateCalculateButton(data.provider.canCalculate);
+      } else {
+        showError("Data MRP tidak ditemukan.");
+      }
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+      typeSelect.disabled = false;
+      showError("Koneksi terganggu saat memperbarui Type. Silakan coba lagi.");
     });
 }
 
 function updateTahun(value) {
-  const formData = new FormData();
-  formData.append("action", "update_tahun");
-  formData.append("value", value);
+  const tahunSelect = document.getElementById("tahun");
+  tahunSelect.disabled = true;
 
-  fetch(window.location.href, {
-    method: "POST",
-    headers: {
-      "X-Requested-With": "XMLHttpRequest",
-    },
-    body: formData,
-  })
-    .then((response) => response.json())
+  updateCalculateButton(false);
+  hideError();
+  hideResultSection();
+
+  sendAjaxRequest("update_tahun", value)
     .then((data) => {
+      tahunSelect.disabled = false;
       if (data.success && data.data) {
         updateMRPStandarDisplay(data.data);
         updateMRPDetailModal(data.data);
         updateCalculateButton(data.provider.canCalculate);
-        hideError();
-        hideResultSection();
+      } else {
+        showError("Data MRP tidak ditemukan.");
       }
     })
     .catch((error) => {
       console.error("Error:", error);
-      window.location.reload();
+      tahunSelect.disabled = false;
+      showError(
+        "Koneksi terganggu saat tahun diperbarui. Silakan coba lagi.",
+      );
     });
 }
 
@@ -372,18 +397,7 @@ function submitMRP(value) {
     return;
   }
 
-  const formData = new FormData();
-  formData.append("action", "update_mrp");
-  formData.append("value", value);
-
-  fetch(window.location.href, {
-    method: "POST",
-    headers: {
-      "X-Requested-With": "XMLHttpRequest",
-    },
-    body: formData,
-  })
-    .then((response) => response.json())
+  sendAjaxRequest("update_mrp", value)
     .then((data) => {
       if (data.success) {
         if (
@@ -398,7 +412,6 @@ function submitMRP(value) {
         } else {
           hideSelisihMRP();
         }
-
         updateCalculateButton(data.provider.canCalculate);
         hideError();
         hideResultSection();
@@ -413,24 +426,13 @@ function submitDP(value) {
     return;
   }
 
-  const formData = new FormData();
-  formData.append("action", "update_dp");
-  formData.append("value", value);
-
-  fetch(window.location.href, {
-    method: "POST",
-    headers: {
-      "X-Requested-With": "XMLHttpRequest",
-    },
-    body: formData,
-  })
-    .then((response) => response.json())
+  sendAjaxRequest("update_dp", value)
     .then((data) => {
       if (data.success) {
         if (data.data.dpPercentage) {
-          document.getElementById("dp-percentage").textContent =
-            data.data.dpPercentage;
-          document.getElementById("dp-percentage").style.display = "flex";
+          const dpEl = document.getElementById("dp-percentage");
+          dpEl.textContent = data.data.dpPercentage;
+          dpEl.style.display = "flex";
         } else {
           resetDPPercentage();
         }
@@ -439,7 +441,6 @@ function submitDP(value) {
           document.getElementById("tdp-value").textContent =
             data.data.tdpPreview;
         }
-
         updateCalculateButton(data.provider.canCalculate);
         hideError();
         hideResultSection();
@@ -448,20 +449,13 @@ function submitDP(value) {
     .catch((error) => console.error("Error:", error));
 }
 
-// CALCULATION & RESULTS
 function calculateFinancing() {
-  const formData = new FormData();
-  formData.append("action", "calculate");
+  const btn = document.getElementById("calculate-btn");
+  if (btn) btn.disabled = true;
 
-  fetch(window.location.href, {
-    method: "POST",
-    headers: {
-      "X-Requested-With": "XMLHttpRequest",
-    },
-    body: formData,
-  })
-    .then((response) => response.json())
+  sendAjaxRequest("calculate")
     .then((data) => {
+      if (btn) btn.disabled = false;
       if (data.success) {
         if (data.data.errorValidation) {
           showError(data.data.errorValidation);
@@ -473,7 +467,11 @@ function calculateFinancing() {
         }
       }
     })
-    .catch((error) => console.error("Error:", error));
+    .catch((error) => {
+      console.error("Error:", error);
+      if (btn) btn.disabled = false;
+      showError("Kalkulasi gagal. Periksa koneksi jaringan Anda.");
+    });
 }
 
 function updateResults(result) {
@@ -533,17 +531,7 @@ function updateResults(result) {
 
 function resetForm() {
   if (confirm("Apakah Anda yakin ingin mereset semua data?")) {
-    const formData = new FormData();
-    formData.append("action", "reset");
-
-    fetch(window.location.href, {
-      method: "POST",
-      headers: {
-        "X-Requested-With": "XMLHttpRequest",
-      },
-      body: formData,
-    })
-      .then((response) => response.json())
+    sendAjaxRequest("reset")
       .then((data) => {
         if (data.success) {
           location.reload();
@@ -551,6 +539,159 @@ function resetForm() {
       })
       .catch((error) => console.error("Error:", error));
   }
+}
+
+function initCustomDropdowns() {
+  const selects = document.querySelectorAll(".form-group select");
+
+  selects.forEach((select) => {
+    if (select.closest(".custom-select-container")) return;
+
+    const container = document.createElement("div");
+    container.className = "custom-select-container";
+    select.parentNode.insertBefore(container, select);
+    container.appendChild(select);
+
+    const trigger = document.createElement("div");
+    trigger.className = "custom-select-trigger";
+    trigger.setAttribute("tabindex", select.disabled ? "-1" : "0");
+    if (select.disabled) trigger.classList.add("disabled");
+
+    const triggerText = document.createElement("span");
+    triggerText.className = "custom-select-text";
+    trigger.appendChild(triggerText);
+
+    const arrow = document.createElement("div");
+    arrow.className = "custom-select-arrow";
+    arrow.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+    trigger.appendChild(arrow);
+
+    const optionsContainer = document.createElement("div");
+    optionsContainer.className = "custom-select-options";
+
+    function syncTrigger() {
+      const selectedOpt = select.options[select.selectedIndex];
+      triggerText.textContent = selectedOpt ? selectedOpt.textContent : "";
+
+      if (selectedOpt && selectedOpt.value === "") {
+        triggerText.style.color = "var(--app-text-light)";
+      } else {
+        triggerText.style.color = "var(--app-text-primary)";
+      }
+    }
+
+    function populateOptions() {
+      optionsContainer.innerHTML = "";
+      Array.from(select.options).forEach((option, index) => {
+        const optDiv = document.createElement("div");
+        optDiv.className = "custom-select-option";
+        if (option.selected) optDiv.classList.add("selected");
+        optDiv.textContent = option.textContent;
+
+        optDiv.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (select.disabled) return;
+
+          if (select.selectedIndex !== index) {
+            select.selectedIndex = index;
+            const event = new Event("change", { bubbles: true });
+            select.dispatchEvent(event);
+          }
+
+          optionsContainer.classList.remove("show");
+          trigger.classList.remove("active");
+          syncTrigger();
+
+          Array.from(optionsContainer.children).forEach((c) =>
+            c.classList.remove("selected"),
+          );
+          optDiv.classList.add("selected");
+        });
+
+        optionsContainer.appendChild(optDiv);
+      });
+      syncTrigger();
+    }
+
+    populateOptions();
+    container.appendChild(trigger);
+    container.appendChild(optionsContainer);
+
+    trigger.addEventListener("click", (e) => {
+      if (select.disabled) return;
+      e.stopPropagation();
+
+      const isShowing = optionsContainer.classList.contains("show");
+
+      document.querySelectorAll(".custom-select-options.show").forEach((el) => {
+        el.classList.remove("show");
+        el.previousElementSibling.classList.remove("active");
+      });
+
+      if (!isShowing) {
+        optionsContainer.classList.add("show");
+        trigger.classList.add("active");
+
+        const selectedOpt = optionsContainer.querySelector(".selected");
+        if (selectedOpt) {
+          setTimeout(() => {
+            selectedOpt.scrollIntoView({
+              block: "nearest",
+              behavior: "smooth",
+            });
+          }, 15);
+        }
+      }
+    });
+
+    trigger.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        trigger.click();
+      }
+    });
+
+    const observer = new MutationObserver((mutations) => {
+      let optionsChanged = false;
+      mutations.forEach((mutation) => {
+        if (mutation.type === "childList") {
+          optionsChanged = true;
+        }
+        if (
+          mutation.type === "attributes" &&
+          mutation.attributeName === "disabled"
+        ) {
+          if (select.disabled) {
+            trigger.classList.add("disabled");
+            trigger.classList.remove("active");
+            trigger.setAttribute("tabindex", "-1");
+            optionsContainer.classList.remove("show");
+          } else {
+            trigger.classList.remove("disabled");
+            trigger.setAttribute("tabindex", "0");
+          }
+        }
+      });
+
+      if (optionsChanged) {
+        populateOptions();
+      }
+    });
+
+    observer.observe(select, { childList: true, attributes: true });
+
+    select.style.display = "none";
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".custom-select-container")) {
+      document.querySelectorAll(".custom-select-options.show").forEach((el) => {
+        el.classList.remove("show");
+        el.previousElementSibling.classList.remove("active");
+      });
+    }
+  });
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -568,4 +709,6 @@ document.addEventListener("DOMContentLoaded", function () {
       closeMRPDetail();
     }
   });
+
+  initCustomDropdowns();
 });
